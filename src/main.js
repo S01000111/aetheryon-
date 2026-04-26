@@ -8,8 +8,9 @@ const cfg = {
     RADIUS: 0.005, FORCE: 6000,
     GLOW: 0.1, CONTRAST: 1.2, SAT: 1.3,
     SPEED: 1.6,
-    MIX: false, BG: true, BORDER: true,
-    INFLOW: 0.6,
+    MIX: false, BG: false, BORDER: true,
+    INFLOW: 0.6, BOX_DIR: 'left', BOX_SPEED: 7.0, BOX_SPREAD: 0.5,
+    LAZY: false, LAZY_VAL: 0.10, VISC: 0.0, JELLY: false,
     B_THICK: 31, B_INT: 0.15, B_SPD: 0.4,
     ACTIVE_IDX: 0,
     mainColors: [
@@ -145,6 +146,21 @@ void main(){
     gl_FragColor = vec4(c, 1.0);
 }`;
 
+const blurFS = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uTex;
+uniform vec2 uTexSize;
+uniform float uAmt;
+void main(){
+    vec4 c = texture2D(uTex, vUv);
+    vec4 l = texture2D(uTex, vUv - vec2(uTexSize.x, 0.0));
+    vec4 r = texture2D(uTex, vUv + vec2(uTexSize.x, 0.0));
+    vec4 t = texture2D(uTex, vUv + vec2(0.0, uTexSize.y));
+    vec4 b = texture2D(uTex, vUv - vec2(0.0, uTexSize.y));
+    gl_FragColor = mix(c, (l + r + t + b + c) * 0.2, uAmt);
+}`;
+
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 function hexToColor(hex) {
     // Asegurar formato #RRGGBB sin alfa
@@ -169,23 +185,20 @@ class FluidEngine {
         this.buildUI();
         this.buildBorderFX();
 
-        this.mouse     = new THREE.Vector2(-1, -1);
-        this.prevMouse = new THREE.Vector2(-1, -1);
-        this.queue     = [];
-        this.t         = 0;
+        this.mouse       = new THREE.Vector2(-1, -1);
+        this.targetMouse = new THREE.Vector2(-1, -1);
+        this.prevMouse   = new THREE.Vector2(-1, -1);
+        this.queue       = [];
+        this.t           = 0;
 
         window.addEventListener('mousemove', e => {
             const x = e.clientX / window.innerWidth;
             const y = 1 - e.clientY / window.innerHeight;
-            this.mouse.set(x, y);
-            if (this.prevMouse.x >= 0) {
-                const dx = (x - this.prevMouse.x) * cfg.FORCE * (cfg.SPEED / 5);
-                const dy = (y - this.prevMouse.y) * cfg.FORCE * (cfg.SPEED / 5);
-                if (Math.abs(dx) + Math.abs(dy) > 0.0001) {
-                    this.queue.push({ x, y, dx, dy });
-                }
+            this.targetMouse.set(x, y);
+            if (this.mouse.x < 0) {
+                this.mouse.set(x, y);
+                this.prevMouse.set(x, y);
             }
-            this.prevMouse.set(x, y);
         });
 
         this.animate();
@@ -244,14 +257,17 @@ class FluidEngine {
         this.mDisp = new THREE.ShaderMaterial({ vertexShader: baseVS, fragmentShader: displayFS,
             uniforms: { uTex:{value:null}, uGlow:{value:cfg.GLOW}, uContrast:{value:cfg.CONTRAST}, uSat:{value:cfg.SAT} }
         });
+        this.mBlur = new THREE.ShaderMaterial({ vertexShader: baseVS, fragmentShader: blurFS,
+            uniforms: { uTex:{value:null}, uTexSize:{value:tex}, uAmt:{value:0.0} }
+        });
     }
 
     // ── UI ────────────────────────────────────────────────────────────────────
     buildUI() {
         // Fidelity
-        document.querySelectorAll('.fid-btn').forEach(btn => {
+        document.querySelectorAll('.fid-btn[data-sim]').forEach(btn => {
             btn.addEventListener('click', () => {
-                document.querySelectorAll('.fid-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.fid-btn[data-sim]').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 cfg.SIM_RES = parseInt(btn.dataset.sim);
                 cfg.DYE_RES = parseInt(btn.dataset.dye);
@@ -270,13 +286,31 @@ class FluidEngine {
         this.sl('p-bthick',   v => { cfg.B_THICK   = v; });
         this.sl('p-bint',     v => { cfg.B_INT     = v; });
         this.sl('p-bspd',     v => { cfg.B_SPD     = v; });
+        this.sl('p-lazy',     v => { cfg.LAZY_VAL  = v; });
+        this.sl('p-visc',     v => { cfg.VISC      = v; });
+        this.sl('p-bspeed',   v => { cfg.BOX_SPEED = v; });
+        this.sl('p-bspread',  v => { cfg.BOX_SPREAD= v; });
 
         // Toggles
         this.tog('tog-mix',    v => { cfg.MIX    = v; });
         this.tog('tog-bg',     v => { cfg.BG     = v; });
+        this.tog('tog-jelly',  v => { cfg.JELLY  = v; });
+        this.tog('tog-lazy',   v => { cfg.LAZY   = v; });
         this.tog('tog-border', v => {
             cfg.BORDER = v;
             document.getElementById('border-fx').style.display = v ? 'block' : 'none';
+        });
+
+        // Box dir buttons
+        ['l','r','t','b'].forEach(d => {
+            const btn = document.getElementById('btn-dir-' + d);
+            if(btn) {
+                btn.onclick = () => {
+                    document.querySelectorAll('[id^="btn-dir-"]').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    cfg.BOX_DIR = d === 'l' ? 'left' : d === 'r' ? 'right' : d === 't' ? 'top' : 'bot';
+                };
+            }
         });
 
         // Paletas con input[type=color] nativo
@@ -429,13 +463,51 @@ class FluidEngine {
         requestAnimationFrame(() => this.animate());
         this.t += 0.016;
 
-        // BOX SMOKE: flujo denso desde el lateral izquierdo
+        // LAZY MOUSE INTERPOLATION
+        if (this.targetMouse.x >= 0) {
+            if (cfg.LAZY) {
+                this.mouse.x += (this.targetMouse.x - this.mouse.x) * cfg.LAZY_VAL;
+                this.mouse.y += (this.targetMouse.y - this.mouse.y) * cfg.LAZY_VAL;
+            } else {
+                this.mouse.copy(this.targetMouse);
+            }
+
+            const dx = (this.mouse.x - this.prevMouse.x) * cfg.FORCE * (cfg.SPEED / 5);
+            const dy = (this.mouse.y - this.prevMouse.y) * cfg.FORCE * (cfg.SPEED / 5);
+            if (Math.abs(dx) + Math.abs(dy) > 0.0001) {
+                this.queue.push({ x: this.mouse.x, y: this.mouse.y, dx, dy });
+            }
+            this.prevMouse.copy(this.mouse);
+        }
+
+        // BOX SMOKE: flujo denso custom
         if (cfg.BG) {
-            const n = Math.max(1, Math.round(cfg.INFLOW * 2));
+            const n = Math.max(1, Math.round(Number(cfg.INFLOW) * 2));
             for (let i = 0; i < n; i++) {
-                const y   = (i + Math.random()) / n;
+                const pos = (i + Math.random()) / n;
+                const offset = (pos - 0.5) * Number(cfg.BOX_SPREAD) + 0.5;
                 const col = cfg.boxColors[Math.floor(Math.random() * cfg.boxColors.length)];
-                this.splat(0.005, y, 7 * cfg.INFLOW, (Math.random() - 0.5) * 1.5, col, 0.003);
+                
+                let px = 0.5, py = 0.5, vx = 0, vy = 0;
+                const speed = Number(cfg.BOX_SPEED) * Number(cfg.INFLOW);
+
+                if (cfg.BOX_DIR === 'left') {
+                    px = 0.05; py = offset;
+                    vx = speed; vy = (Math.random() - 0.5) * 1.5;
+                } else if (cfg.BOX_DIR === 'right') {
+                    px = 0.95; py = offset;
+                    vx = -speed; vy = (Math.random() - 0.5) * 1.5;
+                } else if (cfg.BOX_DIR === 'top') {
+                    px = offset; py = 0.95;
+                    vx = (Math.random() - 0.5) * 1.5; vy = -speed;
+                } else if (cfg.BOX_DIR === 'bot') { // bot
+                    px = offset; py = 0.05;
+                    vx = (Math.random() - 0.5) * 1.5; vy = speed;
+                }
+                
+                if (Number.isFinite(px) && Number.isFinite(py) && Number.isFinite(vx) && Number.isFinite(vy)) {
+                    this.splat(px, py, vx, vy, col, 0.003);
+                }
             }
         }
 
@@ -448,6 +520,13 @@ class FluidEngine {
         this.mAdv.uniforms.uSrc.value  = this.bDens.read.texture;
         this.mAdv.uniforms.uDiss.value = cfg.DISS;
         this.pass(this.mAdv, this.bDens.write); this.bDens.swap();
+
+        // VISCOSIDAD (BLUR VELOCITY)
+        if (cfg.VISC > 0) {
+            this.mBlur.uniforms.uTex.value = this.bVel.read.texture;
+            this.mBlur.uniforms.uAmt.value = cfg.VISC * 0.2; // Escalar a un rango razonable
+            this.pass(this.mBlur, this.bVel.write); this.bVel.swap();
+        }
 
         // VORTICIDAD
         this.mCurl.uniforms.uVel.value  = this.bVel.read.texture;
@@ -470,11 +549,13 @@ class FluidEngine {
         });
         this.queue = [];
 
-        // PROYECCIÓN
+        // PROYECCIÓN DE PRESIÓN
         this.mDiv.uniforms.uVel.value = this.bVel.read.texture;
         this.pass(this.mDiv, this.bDiv);
 
-        for (let i = 0; i < cfg.PRESSURE_ITER; i++) {
+        // JELLY PHYSICS: Reduce iteraciones de presión drásticamente si está apagado
+        const pIter = cfg.JELLY ? cfg.PRESSURE_ITER : 4;
+        for (let i = 0; i < pIter; i++) {
             this.mPrs.uniforms.uPrs.value = this.bPrs.read.texture;
             this.mPrs.uniforms.uDiv.value = this.bDiv.texture;
             this.pass(this.mPrs, this.bPrs.write); this.bPrs.swap();

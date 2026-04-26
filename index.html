@@ -22,13 +22,16 @@
             z-index:100; box-shadow:0 40px 90px rgba(0,0,0,.95);
             overflow:visible;
             max-height:92vh;
-            transition:max-height .5s cubic-bezier(.16,1,.3,1), width .45s cubic-bezier(.16,1,.3,1);
+            transition:max-height .5s cubic-bezier(.16,1,.3,1), width .45s cubic-bezier(.16,1,.3,1), border-radius .45s;
         }
-        #panel.collapsed { width:176px; max-height:54px; overflow:hidden; }
+        #panel.collapsed { width:50px; max-height:50px; overflow:hidden; border-radius:50%; box-shadow:0 0 25px rgba(0,242,255,0.3), inset 0 0 10px rgba(0,242,255,0.2); animation:pulseGlow 2s infinite alternate; }
+        @keyframes pulseGlow { 0% { box-shadow:0 0 15px rgba(0,242,255,0.2), inset 0 0 5px rgba(0,242,255,0.1); } 100% { box-shadow:0 0 35px rgba(0,242,255,0.5), inset 0 0 20px rgba(0,242,255,0.3); } }
         .ph { padding:16px 22px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; border-bottom:1px solid rgba(255,255,255,.04); border-radius:22px 22px 0 0; }
         .ph h3 { margin:0; font-size:10px; letter-spacing:4px; text-transform:uppercase; color:var(--ac); }
         .ph-icon { font-size:14px; opacity:.3; transition:.4s; }
-        #panel.collapsed .ph-icon { transform:rotate(180deg); }
+        #panel.collapsed .ph { height:50px; padding:0; border:none; justify-content:center; }
+        #panel.collapsed .ph h3, #panel.collapsed .ph-icon { display:none; }
+        #panel.collapsed::after { content:''; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:10px; height:10px; border-radius:50%; background:var(--ac); opacity:0.8; pointer-events:none; }
         .pb { padding:8px 22px 24px; overflow-y:auto; overflow-x:visible; scrollbar-width:none; max-height:calc(92vh - 56px); }
         .pb::-webkit-scrollbar { display:none; }
         #panel.collapsed .pb { display:none; }
@@ -104,6 +107,16 @@
 
             <div class="sec">
                 <span class="sec-label">Physics Engine</span>
+                <div class="tog-row">
+                    <span class="tog-lbl">Jelly Physics (Bouncy)</span>
+                    <div id="tog-jelly" class="tog"></div>
+                </div>
+                <div class="tog-row">
+                    <span class="tog-lbl">Lazy Mouse</span>
+                    <div id="tog-lazy" class="tog"></div>
+                </div>
+                <div class="ctrl"><div class="ctrl-info">Lazy Delay <span class="val" id="v-lazy">0.10</span></div><input type="range" id="p-lazy" min="0.01" max="0.3" step="0.01" value="0.10"></div>
+                <div class="ctrl"><div class="ctrl-info">Viscosity <span class="val" id="v-visc">0.0</span></div><input type="range" id="p-visc" min="0" max="5" step="0.1" value="0.0"></div>
                 <div class="ctrl"><div class="ctrl-info">Turbulence <span class="val" id="v-vort">16</span></div><input type="range" id="p-vort" min="0" max="100" step="1" value="16"></div>
                 <div class="ctrl"><div class="ctrl-info">Persistence <span class="val" id="v-diss">0.99</span></div><input type="range" id="p-diss" min="0.9" max="0.999" step="0.001" value="0.99"></div>
                 <div class="ctrl"><div class="ctrl-info">Flow Speed <span class="val" id="v-speed">1.6</span></div><input type="range" id="p-speed" min="1" max="15" step="0.1" value="1.6"></div>
@@ -132,11 +145,25 @@
                 <span class="sec-label">Box Smoke Mode</span>
                 <div class="tog-row">
                     <span class="tog-lbl">Active Inflow</span>
-                    <div id="tog-bg" class="tog on"></div>
+                    <div id="tog-bg" class="tog"></div>
+                </div>
+                <div class="ctrl" style="margin-top:10px; display:flex; justify-content:space-between; gap:4px;">
+                    <div class="fid-btn active" id="btn-dir-l" style="flex:1;">LEFT</div>
+                    <div class="fid-btn" id="btn-dir-r" style="flex:1;">RIGHT</div>
+                    <div class="fid-btn" id="btn-dir-t" style="flex:1;">TOP</div>
+                    <div class="fid-btn" id="btn-dir-b" style="flex:1;">BOT</div>
                 </div>
                 <div class="ctrl" style="margin-top:10px;">
                     <div class="ctrl-info">Inflow Strength <span class="val" id="v-inflow">0.6</span></div>
                     <input type="range" id="p-inflow" min="0.1" max="5" step="0.1" value="0.6">
+                </div>
+                <div class="ctrl">
+                    <div class="ctrl-info">Smoke Speed <span class="val" id="v-bspeed">7.0</span></div>
+                    <input type="range" id="p-bspeed" min="1" max="20" step="0.5" value="7.0">
+                </div>
+                <div class="ctrl">
+                    <div class="ctrl-info">Smoke Spread <span class="val" id="v-bspread">0.50</span></div>
+                    <input type="range" id="p-bspread" min="0.05" max="1" step="0.05" value="0.50">
                 </div>
                 <span class="sec-label" style="margin-top:10px;">Box Palette — Dbl-click to edit</span>
                 <div class="pal-wrap" id="box-palette">
