@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 230 52" fill="none">
+  <defs>
+    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9d4edd"/>
+      <stop offset="100%" stop-color="#6600ff"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Outer orbital ring -->
+  <circle cx="26" cy="26" r="22" stroke="url(#ringGrad)" stroke-width="1.2" opacity="0.9"/>
+  <!-- Inner ring -->
+  <circle cx="26" cy="26" r="14" stroke="rgba(157,78,221,0.35)" stroke-width="0.6"/>
+
+  <!-- Cross axes -->
+  <line x1="26" y1="5"  x2="26" y2="47" stroke="rgba(157,78,221,0.45)" stroke-width="0.7"/>
+  <line x1="5"  y1="26" x2="47" y2="26" stroke="rgba(157,78,221,0.45)" stroke-width="0.7"/>
+  <!-- Diagonal axes -->
+  <line x1="10" y1="10" x2="42" y2="42" stroke="rgba(157,78,221,0.25)" stroke-width="0.5"/>
+  <line x1="42" y1="10" x2="10" y2="42" stroke="rgba(157,78,221,0.25)" stroke-width="0.5"/>
+
+  <!-- 12 tick marks on outer ring for zodiac -->
+  <circle cx="26" cy="4"  r="1.2" fill="rgba(157,78,221,0.7)"/>
+  <circle cx="37" cy="7"  r="0.9" fill="rgba(157,78,221,0.5)"/>
+  <circle cx="44" cy="15" r="0.9" fill="rgba(157,78,221,0.5)"/>
+  <circle cx="48" cy="26" r="1.2" fill="rgba(157,78,221,0.7)"/>
+  <circle cx="44" cy="37" r="0.9" fill="rgba(157,78,221,0.5)"/>
+  <circle cx="37" cy="45" r="0.9" fill="rgba(157,78,221,0.5)"/>
+  <circle cx="26" cy="48" r="1.2" fill="rgba(157,78,221,0.7)"/>
+  <circle cx="15" cy="45" r="0.9" fill="rgba(157,78,221,0.5)"/>
+  <circle cx="8"  cy="37" r="0.9" fill="rgba(157,78,221,0.5)"/>
+  <circle cx="4"  cy="26" r="1.2" fill="rgba(157,78,221,0.7)"/>
+  <circle cx="8"  cy="15" r="0.9" fill="rgba(157,78,221,0.5)"/>
+  <circle cx="15" cy="7"  r="0.9" fill="rgba(157,78,221,0.5)"/>
+
+  <!-- Center glow dot -->
+  <circle cx="26" cy="26" r="8" fill="#9d4edd" opacity="0.12" filter="url(#glow)"/>
+  <circle cx="26" cy="26" r="4" fill="#9d4edd" opacity="0.85"/>
+
+  <!-- AETHERYON text -->
+  <text x="60" y="22" font-family="Outfit,system-ui,sans-serif" font-weight="700" font-size="19" fill="#eaeaea" letter-spacing="-0.5">AETHERYON</text>
+  <!-- MYTHOS subtext -->
+  <text x="61" y="38" font-family="Outfit,system-ui,sans-serif" font-weight="300" font-size="9" fill="#9d4edd" letter-spacing="5.5">MYTHOS</text>
+</svg>

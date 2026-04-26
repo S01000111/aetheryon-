@@ -1,0 +1,734 @@
+/* ============================================================
+   SCROLLYTELLING — Aetheryon by Mythos
+   ============================================================ */
+
+/* ── Variables de color del HUD (modificables desde el panel) ── */
+:root {
+    --dot-color:      #9d4edd;
+    --dot-glow-a:     rgba(157, 78, 221, 0.9);
+    --dot-glow-b:     rgba(157, 78, 221, 0.55);
+    --dot-glow-c:     rgba(157, 78, 221, 0.25);
+}
+
+/* ── Reset de overflow para scroll programático ── */
+html, body {
+    height: auto !important;
+    min-height: 100% !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    scroll-behavior: auto;
+}
+
+/* ── Contenedor de secciones ── */
+#scroll-container {
+    position: relative;
+    z-index: 10;
+    pointer-events: none;
+}
+.step {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+/* ============================================================
+   NAVEGACIÓN SUPERIOR
+   ============================================================ */
+#top-nav {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 80px 20px 30px;
+    z-index: 90;
+    pointer-events: auto;
+    font-family: 'Outfit', sans-serif;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 100%);
+}
+
+/* Lado izquierdo: logo + links */
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+}
+
+/* Logo */
+#site-logo {
+    height: 38px;
+    width: auto;
+    filter: drop-shadow(0 0 8px rgba(157,78,221,0.4));
+    transition: filter 0.3s ease;
+    display: block;
+}
+#site-logo:hover { filter: drop-shadow(0 0 18px rgba(157,78,221,0.75)); }
+
+.nav-links { display: flex; gap: 4px; }
+
+/* ── Cada ítem del menú con dropdown ── */
+.nav-item {
+    position: relative;
+}
+/* Puente invisible que cubre el gap entre el botón y el dropdown
+   para que el hover no se pierda al bajar el cursor */
+.nav-item::after {
+    content: '';
+    position: absolute;
+    bottom: -12px;
+    left: 0;
+    right: 0;
+    height: 12px;
+    background: transparent;
+}
+.nav-item > a {
+    color: rgba(200, 180, 255, 0.75);
+    text-decoration: none;
+    font-size: 13.5px;
+    font-weight: 400;
+    letter-spacing: 0.3px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: color 0.25s, background 0.25s;
+}
+.nav-item > a:hover { color: #fff; background: rgba(157,78,221,0.1); }
+
+.nav-arrow {
+    font-size: 9px;
+    opacity: 0.5;
+    transition: transform 0.3s, opacity 0.3s;
+    display: inline-block;
+}
+.nav-item:hover .nav-arrow { transform: rotate(180deg); opacity: 1; }
+
+/* ── Dropdown panel ── */
+.dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%) translateY(-8px);
+    min-width: 210px;
+    background: rgba(6, 3, 18, 0.94);
+    border: 1px solid rgba(157, 78, 221, 0.18);
+    border-radius: 16px;
+    padding: 8px 0;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    z-index: 200;
+    pointer-events: none;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 0 1px rgba(157,78,221,0.08);
+}
+.nav-item:hover .dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+}
+
+/* Separador del dropdown */
+.dropdown-sep {
+    height: 1px;
+    background: rgba(157,78,221,0.1);
+    margin: 6px 14px;
+}
+
+/* Links dentro del dropdown */
+.dropdown a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 18px;
+    color: rgba(210, 190, 255, 0.7) !important;
+    font-size: 12.5px;
+    letter-spacing: 0.3px;
+    transition: all 0.2s;
+    border-radius: 10px;
+    margin: 2px 6px;
+    text-decoration: none;
+    background: transparent;
+}
+.dropdown a:hover {
+    background: rgba(157,78,221,0.14);
+    color: #fff !important;
+    padding-left: 24px;
+}
+.dropdown a .dd-icon {
+    font-size: 14px;
+    opacity: 0.7;
+    min-width: 18px;
+    text-align: center;
+}
+
+/* Botón CTA derecha */
+.btn-primary {
+    background: linear-gradient(135deg, #7c3aed, #5b21b6);
+    color: #fff !important;
+    padding: 10px 24px;
+    border-radius: 28px;
+    font-weight: 600 !important;
+    font-size: 13px;
+    letter-spacing: 0.3px;
+    box-shadow: 0 4px 20px rgba(102,0,255,0.4), 0 0 0 1px rgba(150,80,255,0.25);
+    transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), box-shadow 0.3s;
+    white-space: nowrap;
+    text-decoration: none;
+}
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(102,0,255,0.6), 0 0 0 1px rgba(180,100,255,0.4);
+}
+
+/* ============================================================
+   PUNTOS DE NAVEGACIÓN LATERAL
+   ============================================================ */
+#dot-nav {
+    position: fixed;
+    right: 28px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    z-index: 90;
+    pointer-events: auto;
+}
+
+.dot-triangle {
+    width: 0; height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    cursor: pointer;
+    opacity: 0.4;
+    transition: opacity 0.3s, filter 0.3s;
+    display: block;
+}
+.dot-triangle:hover { opacity: 1; filter: drop-shadow(0 0 5px var(--dot-color)); }
+.dot-triangle.up   { border-bottom: 7px solid var(--dot-color); }
+.dot-triangle.down { border-top:    7px solid var(--dot-color); }
+
+.dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: rgba(157,78,221,0.3);
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    display: block;
+}
+.dot.active {
+    background: var(--dot-color);
+    width: 6px; height: 28px;
+    border-radius: 6px;
+    box-shadow:
+        0 0 6px 2px  var(--dot-glow-a),
+        0 0 18px 5px var(--dot-glow-b),
+        0 0 40px 10px var(--dot-glow-c);
+    animation: dotPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes dotPulse {
+    0%, 100% { box-shadow: 0 0 6px 2px var(--dot-glow-a), 0 0 18px 5px var(--dot-glow-b), 0 0 40px 10px var(--dot-glow-c); }
+    50%       { box-shadow: 0 0 10px 3px var(--dot-glow-a), 0 0 30px 8px var(--dot-glow-b), 0 0 60px 15px var(--dot-glow-c); }
+}
+
+/* Swatches del panel para color de puntos */
+.dot-color-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+.dcw {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid rgba(255,255,255,0.1);
+    transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
+    pointer-events: auto;
+}
+.dcw:hover { transform: scale(1.15); }
+.dcw.active { border-color: #fff; transform: scale(1.2); box-shadow: 0 0 12px rgba(255,255,255,0.3); }
+
+/* Header de sección del panel */
+.sec-header-ui {
+    font-size: 9px;
+    letter-spacing: 3.5px;
+    text-transform: uppercase;
+    color: var(--dot-color);
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    opacity: 0.9;
+}
+
+/* ============================================================
+   ANIMACIONES STEP CONTENT
+   ============================================================ */
+.step-content {
+    opacity: 0;
+    transform: translateY(55px);
+    transition: opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+                transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+    pointer-events: auto;
+    will-change: opacity, transform;
+}
+.step:not(.is-visible) .step-content {
+    opacity: 0;
+    transform: translateY(-30px);
+    transition: opacity 0.4s cubic-bezier(0.55,0,1,0.45),
+                transform 0.4s cubic-bezier(0.55,0,1,0.45);
+}
+.step.is-visible .step-content { opacity: 1; transform: translateY(0); }
+
+/* ============================================================
+   SECCIÓN 1 — HERO
+   ============================================================ */
+.hero-content { text-align: center; }
+
+.hero-kicker {
+    font-size: 11px;
+    letter-spacing: 8px;
+    color: var(--dot-color);
+    text-transform: uppercase;
+    font-weight: 300;
+    margin: 0 0 16px;
+    opacity: 0.85;
+}
+.hero-title {
+    font-size: clamp(72px, 11vw, 140px);
+    font-weight: 700;
+    letter-spacing: -5px;
+    line-height: 0.88;
+    margin: 0;
+    background: linear-gradient(160deg, #fff 30%, rgba(180,140,255,0.8) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.hero-tagline {
+    font-size: 18px;
+    font-weight: 300;
+    color: rgba(220,200,255,0.6);
+    line-height: 1.6;
+    margin: 28px 0 40px;
+    letter-spacing: 0.3px;
+}
+.hero-scroll-hint {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    opacity: 0.45;
+    animation: hintBob 2.5s ease-in-out infinite;
+}
+.hero-scroll-hint span { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; }
+.scroll-line {
+    width: 1px; height: 50px;
+    background: linear-gradient(to bottom, rgba(157,78,221,0.8), transparent);
+}
+@keyframes hintBob {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(8px); }
+}
+
+/* ============================================================
+   SECCIÓN 2 — EL CICLO SIN FIN
+   ============================================================ */
+.step-card {
+    background: rgba(8, 5, 20, 0.68);
+    border: 1px solid rgba(157,78,221,0.13);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    padding: 50px 60px;
+    border-radius: 28px;
+    width: 860px;
+    max-width: 88vw;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.75), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.status-text {
+    font-size: 10px;
+    letter-spacing: 4.5px;
+    color: rgba(157,78,221,0.7);
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 22px;
+    font-weight: 600;
+}
+.transcription {
+    font-family: 'Times New Roman', Times, serif;
+    font-style: italic;
+    font-size: 48px;
+    line-height: 1.3;
+    margin: 0 0 36px;
+    color: #f0eaff;
+    font-weight: 300;
+}
+.ciclo-stats {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 28px;
+}
+.ciclo-stat { text-align: center; }
+.ciclo-num {
+    display: block;
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--dot-color);
+    letter-spacing: -1px;
+    line-height: 1;
+}
+.ciclo-label {
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+    margin-top: 4px;
+    display: block;
+}
+.ciclo-sep { font-size: 28px; color: rgba(157,78,221,0.3); }
+.ciclo-desc {
+    font-size: 14px;
+    line-height: 1.75;
+    color: rgba(210,190,255,0.55);
+    margin: 0;
+    font-style: italic;
+    border-top: 1px solid rgba(157,78,221,0.1);
+    padding-top: 24px;
+}
+
+/* ============================================================
+   SECCIÓN 3 — LAS XII PRUEBAS
+   ============================================================ */
+.pruebas-wrap {
+    width: 100%;
+    max-width: 1020px;
+    text-align: center;
+}
+.pruebas-title-area { margin-bottom: 36px; }
+
+.pruebas-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 14px;
+}
+.prueba-item {
+    background: rgba(8,5,20,0.6);
+    border: 1px solid rgba(157,78,221,0.1);
+    border-radius: 14px;
+    padding: 16px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: default;
+    transition: all 0.35s cubic-bezier(0.16,1,0.3,1);
+    backdrop-filter: blur(10px);
+}
+.prueba-item:hover {
+    border-color: rgba(157,78,221,0.4);
+    background: rgba(157,78,221,0.08);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.5), 0 0 20px rgba(157,78,221,0.15);
+}
+.prueba-num {
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: rgba(157,78,221,0.6);
+    font-weight: 700;
+}
+.prueba-signo {
+    font-size: 22px;
+    line-height: 1;
+}
+.prueba-nombre {
+    font-size: 9px;
+    letter-spacing: 0.5px;
+    color: rgba(220,200,255,0.6);
+    text-align: center;
+    text-transform: uppercase;
+    line-height: 1.3;
+}
+
+/* ============================================================
+   SECCIÓN 4 — ELIGE TU DESTINO (clases)
+   ============================================================ */
+.clases-wrap {
+    width: 100%;
+    max-width: 1100px;
+    text-align: center;
+}
+.clases-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin-top: 28px;
+}
+.clase-card {
+    background: rgba(8,5,20,0.65);
+    border: 1px solid rgba(157,78,221,0.12);
+    border-radius: 20px;
+    padding: 36px 20px 28px;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.16,1,0.3,1);
+    backdrop-filter: blur(15px);
+    position: relative;
+    overflow: hidden;
+}
+.clase-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--clase-color, var(--dot-color)), transparent);
+    opacity: 0;
+    transition: opacity 0.4s;
+}
+.clase-card:hover::before { opacity: 1; }
+.clase-card:hover {
+    border-color: rgba(157,78,221,0.35);
+    transform: translateY(-6px);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.65), 0 0 30px rgba(157,78,221,0.12);
+}
+.clase-icono {
+    font-size: 38px;
+    margin-bottom: 14px;
+    display: block;
+    filter: drop-shadow(0 0 10px rgba(157,78,221,0.5));
+}
+.clase-signo-badge {
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--dot-color);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: block;
+    opacity: 0.8;
+}
+.clase-card-nombre {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: #eaeaea;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: block;
+}
+.clase-card-desc {
+    font-size: 12px;
+    line-height: 1.6;
+    color: rgba(210,190,255,0.5);
+    font-style: italic;
+}
+.clase-card-cta {
+    margin-top: 20px;
+    font-size: 10px;
+    letter-spacing: 2.5px;
+    color: rgba(157,78,221,0.6);
+    text-transform: uppercase;
+    transition: color 0.3s;
+}
+.clase-card:hover .clase-card-cta { color: var(--dot-color); }
+
+/* ============================================================
+   SECCIÓN 5 — EL OLIMPO TE AGUARDA
+   ============================================================ */
+.olimpo-content { text-align: center; max-width: 720px; }
+.olimpo-eyebrow {
+    font-size: 10px;
+    letter-spacing: 5px;
+    color: rgba(157,78,221,0.7);
+    text-transform: uppercase;
+    margin-bottom: 30px;
+    display: block;
+}
+.olimpo-title {
+    font-family: 'Times New Roman', Times, serif;
+    font-style: italic;
+    font-size: clamp(32px, 4.5vw, 56px);
+    font-weight: 400;
+    color: #f0eaff;
+    line-height: 1.25;
+    margin: 0 0 44px;
+}
+.btn-olimpo {
+    display: inline-block;
+    background: linear-gradient(135deg, #7c3aed, #5b21b6);
+    color: #fff;
+    padding: 16px 44px;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    text-decoration: none;
+    box-shadow: 0 6px 30px rgba(102,0,255,0.5), 0 0 0 1px rgba(150,80,255,0.3);
+    transition: all 0.4s cubic-bezier(0.16,1,0.3,1);
+}
+.btn-olimpo:hover {
+    transform: translateY(-3px) scale(1.03);
+    box-shadow: 0 12px 45px rgba(102,0,255,0.65), 0 0 0 1px rgba(180,100,255,0.5);
+}
+.olimpo-fine {
+    margin-top: 30px;
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: rgba(157,78,221,0.4);
+    font-style: italic;
+}
+
+/* ============================================================
+   OVERLAYS DE CLASES
+   ============================================================ */
+.clase-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    background: rgba(3, 1, 10, 0.97);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.45s cubic-bezier(0.16,1,0.3,1),
+                visibility 0.45s;
+    pointer-events: none;
+}
+.clase-overlay.activa {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+.clase-cerrar {
+    position: absolute;
+    top: 36px; left: 40px;
+    background: rgba(157,78,221,0.1);
+    border: 1px solid rgba(157,78,221,0.2);
+    color: rgba(210,190,255,0.8);
+    padding: 9px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 11px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    font-family: 'Outfit', sans-serif;
+    transition: all 0.3s;
+}
+.clase-cerrar:hover {
+    background: rgba(157,78,221,0.2);
+    color: #fff;
+    border-color: rgba(157,78,221,0.5);
+}
+.clase-inner {
+    max-width: 800px;
+    width: 90%;
+    animation: overlaySlide 0.5s cubic-bezier(0.22,1,0.36,1) both;
+}
+@keyframes overlaySlide {
+    from { opacity: 0; transform: translateY(40px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.clase-header {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 10px;
+}
+.clase-symbol {
+    font-size: 72px;
+    line-height: 1;
+    filter: drop-shadow(0 0 20px rgba(157,78,221,0.7));
+}
+.clase-signo-text {
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: var(--dot-color);
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 6px;
+    opacity: 0.85;
+}
+.clase-nombre {
+    font-size: 64px;
+    font-weight: 700;
+    letter-spacing: -2px;
+    color: #eaeaea;
+    margin: 0;
+    line-height: 0.9;
+}
+.clase-prueba {
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: rgba(157,78,221,0.6);
+    text-transform: uppercase;
+    margin: 20px 0 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(157,78,221,0.15);
+}
+.clase-lore {
+    font-family: 'Times New Roman', Times, serif;
+    font-style: italic;
+    font-size: 18px;
+    line-height: 1.7;
+    color: rgba(210,190,255,0.7);
+    margin: 0 0 30px;
+}
+.clase-stats { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+.stat-row { display: flex; align-items: center; gap: 14px; }
+.stat-name { font-size: 10px; letter-spacing: 2px; color: rgba(255,255,255,0.4); text-transform: uppercase; width: 70px; flex-shrink: 0; }
+.stat-bar-bg { flex: 1; height: 4px; background: rgba(255,255,255,0.07); border-radius: 4px; overflow: hidden; }
+.stat-bar-fill { height: 100%; background: linear-gradient(90deg, var(--dot-color), #c084fc); border-radius: 4px; transition: width 1s cubic-bezier(0.22,1,0.36,1); }
+.stat-val { font-size: 11px; font-family: 'JetBrains Mono'; color: var(--dot-color); width: 28px; text-align: right; }
+.clase-hab-title { font-size: 9px; letter-spacing: 3.5px; color: rgba(157,78,221,0.6); text-transform: uppercase; display: block; margin-bottom: 12px; }
+.clase-hab-list { display: flex; gap: 10px; flex-wrap: wrap; }
+.clase-hab {
+    background: rgba(157,78,221,0.1);
+    border: 1px solid rgba(157,78,221,0.2);
+    padding: 7px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    color: rgba(210,190,255,0.8);
+    transition: all 0.2s;
+}
+.clase-hab:hover { background: rgba(157,78,221,0.2); border-color: rgba(157,78,221,0.4); }
+
+/* ============================================================
+   RESPONSIVO
+   ============================================================ */
+@media (max-width: 1000px) {
+    .pruebas-grid { grid-template-columns: repeat(4, 1fr); }
+    .clases-grid  { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+    #top-nav { padding: 14px 20px; flex-wrap: wrap; gap: 10px; }
+    .nav-left { gap: 16px; flex-wrap: wrap; }
+    .nav-links { gap: 2px; }
+    .nav-item > a { font-size: 12px; padding: 6px 10px; }
+    #site-logo { height: 28px; }
+    .pruebas-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .clases-grid  { grid-template-columns: 1fr 1fr; gap: 12px; }
+    .step-card { padding: 28px 22px; }
+    .transcription { font-size: 28px; }
+    .clase-nombre { font-size: 40px; }
+    .clase-symbol { font-size: 50px; }
+    #panel { top: auto !important; bottom: 16px !important; right: 16px !important; }
+    #dot-nav { right: 8px; transform: translateY(-50%) scale(0.85); }
+}
+@media (max-width: 480px) {
+    .pruebas-grid { grid-template-columns: repeat(2, 1fr); }
+    .clases-grid  { grid-template-columns: 1fr; }
+    .hero-title { letter-spacing: -2px; }
+}

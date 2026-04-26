@@ -5,10 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aetheryon by Mythos</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="/img/logo-pestana.svg">
+    <link rel="alternate icon" type="image/png" href="/img/logo-pestana.png">
+    <link rel="stylesheet" href="/src/scrolly.css">
     <style>
         :root { --ac:#00f2ff; --bg:rgba(6,6,12,.97); --w:310px; }
         *,*::before,*::after { box-sizing:border-box; }
-        body,html { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#000; font-family:'Outfit',sans-serif; color:#fff; }
+        body,html { margin:0; padding:0; width:100%; background:#000; font-family:'Outfit',sans-serif; color:#fff; overflow:hidden; }
         #app { position:fixed; inset:0; z-index:0; }
         #content { position:relative; z-index:1; pointer-events:none; padding:40px 80px; }
         #content p.brand { color:var(--ac); letter-spacing:10px; font-size:13px; margin:0 0 4px; font-weight:300; }
@@ -75,10 +78,167 @@
 </head>
 <body>
     <div id="app"></div>
-    <div id="content">
-        <p class="brand">MYTHOS</p>
-        <h2>AETHERYON</h2>
+
+    <!-- NAVEGACIÓN SUPERIOR -->
+    <nav id="top-nav">
+        <div class="nav-left">
+            <a href="#" onclick="window.scrollyIr&&scrollyIr(0);return false;">
+                <img id="site-logo" src="/img/logo.svg" alt="Aetheryon" onerror="this.onerror=null;this.src='/img/logo.png'">
+            </a>
+            <div class="nav-links">
+                <div class="nav-item">
+                    <a href="#">Mundo <span class="nav-arrow">▾</span></a>
+                    <div class="dropdown">
+                        <a href="#" onclick="scrollyIr(1);return false;"><span class="dd-icon">🗺</span>Mapa Estelar</a>
+                        <a href="#" onclick="scrollyIr(1);return false;"><span class="dd-icon">⚡</span>El Ciclo Sin Fin</a>
+                        <a href="#" onclick="scrollyIr(2);return false;"><span class="dd-icon">⭐</span>Las XII Pruebas</a>
+                        <a href="#" onclick="scrollyIr(4);return false;"><span class="dd-icon">🏛</span>El Olimpo</a>
+                    </div>
+                </div>
+                <div class="nav-item">
+                    <a href="#">Clases <span class="nav-arrow">▾</span></a>
+                    <div class="dropdown">
+                        <a href="#" onclick="abrirClase('guerrero');return false;"><span class="dd-icon">⚔️</span>Guerrero</a>
+                        <a href="#" onclick="abrirClase('mago');return false;"><span class="dd-icon">🔮</span>Mago</a>
+                        <a href="#" onclick="abrirClase('arquera');return false;"><span class="dd-icon">🏹</span>Arquera</a>
+                        <a href="#" onclick="abrirClase('picaro');return false;"><span class="dd-icon">🗡️</span>Pícaro</a>
+                    </div>
+                </div>
+                <div class="nav-item">
+                    <a href="#">Lore <span class="nav-arrow">▾</span></a>
+                    <div class="dropdown">
+                        <a href="#"><span class="dd-icon">📖</span>El Viaje del Héroe</a>
+                        <a href="#"><span class="dd-icon">🔱</span>Los Arcanos</a>
+                        <a href="#"><span class="dd-icon">⚡</span>Dioses &amp; Titanes</a>
+                        <a href="#"><span class="dd-icon">🌟</span>La Profecía</a>
+                    </div>
+                </div>
+                <div class="nav-item">
+                    <a href="#">Galería <span class="nav-arrow">▾</span></a>
+                    <div class="dropdown">
+                        <a href="#"><span class="dd-icon">🎨</span>Ilustraciones</a>
+                        <a href="#"><span class="dd-icon">🎬</span>Cinemáticas</a>
+                        <a href="#"><span class="dd-icon">✏️</span>Arte Conceptual</a>
+                        <a href="#"><span class="dd-icon">📸</span>Capturas en Juego</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <a href="#" class="btn-primary">Contáctanos</a>
+    </nav>
+
+    <!-- PUNTOS LATERALES -->
+    <div id="dot-nav">
+        <div class="dot-triangle up" onclick="scrollyIr(0)"></div>
+        <div class="dot active"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot-triangle down" onclick="scrollyIr(4)"></div>
     </div>
+
+    <!-- SECCIONES DE SCROLL -->
+    <div id="scroll-container">
+
+        <section class="step" id="step-1">
+            <div class="step-content hero-content">
+                <p class="hero-kicker">MYTHOS · MMXXVI</p>
+                <h1 class="hero-title">AETHERYON</h1>
+                <p class="hero-tagline">Doce pruebas. Doce constelaciones.<br>Un solo camino hacia la inmortalidad.</p>
+                <div class="hero-scroll-hint"><span>Desplaza para comenzar</span><div class="scroll-line"></div></div>
+            </div>
+        </section>
+
+        <section class="step" id="step-2">
+            <div class="step-content">
+                <div class="step-card">
+                    <span class="status-text">EL CICLO SIN FIN</span>
+                    <p class="transcription">&ldquo;Muere. Aprende. Asciende.&rdquo;</p>
+                    <div class="ciclo-stats">
+                        <div class="ciclo-stat"><span class="ciclo-num">XII</span><span class="ciclo-label">Pruebas</span></div>
+                        <span class="ciclo-sep">·</span>
+                        <div class="ciclo-stat"><span class="ciclo-num">XII</span><span class="ciclo-label">Signos</span></div>
+                        <span class="ciclo-sep">·</span>
+                        <div class="ciclo-stat"><span class="ciclo-num">∞</span><span class="ciclo-label">Destinos</span></div>
+                    </div>
+                    <p class="ciclo-desc">Cada muerte es un renacimiento. Cada prueba superada ilumina una nueva estrella en tu constelación. No existe un camino fijo — solo el que forjes con tu sangre.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="step" id="step-3">
+            <div class="step-content pruebas-wrap">
+                <div class="pruebas-title-area"><span class="status-text">LAS DOCE PRUEBAS DE HÉRCULES</span></div>
+                <div class="pruebas-grid">
+                    <div class="prueba-item"><span class="prueba-num">I</span><span class="prueba-signo">♈</span><span class="prueba-nombre">León de Nemea</span></div>
+                    <div class="prueba-item"><span class="prueba-num">II</span><span class="prueba-signo">♉</span><span class="prueba-nombre">Hidra de Lerna</span></div>
+                    <div class="prueba-item"><span class="prueba-num">III</span><span class="prueba-signo">♊</span><span class="prueba-nombre">Cierva de Cerinea</span></div>
+                    <div class="prueba-item"><span class="prueba-num">IV</span><span class="prueba-signo">♋</span><span class="prueba-nombre">Jabalí de Erimanto</span></div>
+                    <div class="prueba-item"><span class="prueba-num">V</span><span class="prueba-signo">♌</span><span class="prueba-nombre">Establos de Augías</span></div>
+                    <div class="prueba-item"><span class="prueba-num">VI</span><span class="prueba-signo">♍</span><span class="prueba-nombre">Aves del Estínfalo</span></div>
+                    <div class="prueba-item"><span class="prueba-num">VII</span><span class="prueba-signo">♎</span><span class="prueba-nombre">Toro de Creta</span></div>
+                    <div class="prueba-item"><span class="prueba-num">VIII</span><span class="prueba-signo">♏</span><span class="prueba-nombre">Yeguas de Diomedes</span></div>
+                    <div class="prueba-item"><span class="prueba-num">IX</span><span class="prueba-signo">♐</span><span class="prueba-nombre">Cinturón de Hipólita</span></div>
+                    <div class="prueba-item"><span class="prueba-num">X</span><span class="prueba-signo">♑</span><span class="prueba-nombre">Ganado de Gerión</span></div>
+                    <div class="prueba-item"><span class="prueba-num">XI</span><span class="prueba-signo">♒</span><span class="prueba-nombre">Manzanas Hespérides</span></div>
+                    <div class="prueba-item"><span class="prueba-num">XII</span><span class="prueba-signo">♓</span><span class="prueba-nombre">Cancerbero</span></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="step" id="step-4">
+            <div class="step-content clases-wrap">
+                <span class="status-text" style="text-align:center;display:block;">ELIGE TU DESTINO</span>
+                <div class="clases-grid">
+                    <div class="clase-card" style="--clase-color:#e63946" onclick="abrirClase('guerrero')">
+                        <span class="clase-icono">⚔️</span>
+                        <span class="clase-signo-badge">♈ ARIES · ♌ LEO</span>
+                        <span class="clase-card-nombre">Guerrero</span>
+                        <span class="clase-card-desc">Fuerza sin límites. La primera prueba te forjó en acero y fuego.</span>
+                        <span class="clase-card-cta">Ver clase →</span>
+                    </div>
+                    <div class="clase-card" style="--clase-color:#4361ee" onclick="abrirClase('mago')">
+                        <span class="clase-icono">🔮</span>
+                        <span class="clase-signo-badge">♒ ACUARIO · ♏ ESCORPIO</span>
+                        <span class="clase-card-nombre">Mago</span>
+                        <span class="clase-card-desc">El conocimiento arcano dobla las leyes del cosmos a tu voluntad.</span>
+                        <span class="clase-card-cta">Ver clase →</span>
+                    </div>
+                    <div class="clase-card" style="--clase-color:#2dc653" onclick="abrirClase('arquera')">
+                        <span class="clase-icono">🏹</span>
+                        <span class="clase-signo-badge">♐ SAGITARIO · ♍ VIRGO</span>
+                        <span class="clase-card-nombre">Arquera</span>
+                        <span class="clase-card-desc">Precisa como las estrellas. Ningún destino escapa a su mirada.</span>
+                        <span class="clase-card-cta">Ver clase →</span>
+                    </div>
+                    <div class="clase-card" style="--clase-color:#f4a261" onclick="abrirClase('picaro')">
+                        <span class="clase-icono">🗡️</span>
+                        <span class="clase-signo-badge">♊ GÉMINIS · ♎ LIBRA</span>
+                        <span class="clase-card-nombre">Pícaro</span>
+                        <span class="clase-card-desc">En las sombras entre las estrellas aguarda quien nunca es visto.</span>
+                        <span class="clase-card-cta">Ver clase →</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="step" id="step-5">
+            <div class="step-content" style="text-align:center;">
+                <div class="olimpo-content">
+                    <span class="olimpo-eyebrow">EL OLIMPO TE AGUARDA</span>
+                    <h2 class="olimpo-title">¿Estás preparado para cargar<br>con el peso de las estrellas?</h2>
+                    <a href="#" class="btn-olimpo">Comenzar la Prueba →</a>
+                    <p class="olimpo-fine">— Solo los dignos alcanzan la inmortalidad —</p>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+
+
+
 
     <div id="panel" class="collapsed">
         <div class="ph" onclick="document.getElementById('panel').classList.toggle('collapsed')">
@@ -202,6 +362,20 @@
                 </div>
             </div>
 
+            <!-- HUD: color puntos -->
+            <div class="sec" style="margin-top:20px;border-top:1px solid rgba(157,78,221,0.2);padding-top:18px;">
+                <div class="sec-header-ui">&#x2B22; INTERFAZ HUD</div>
+                <span class="sec-label">Color Puntos de Navegación</span>
+                <div class="dot-color-swatches">
+                    <div class="dcw active" style="background:#9d4edd" data-color="#9d4edd" data-ga="rgba(157,78,221,0.9)" data-gb="rgba(157,78,221,0.55)" data-gc="rgba(157,78,221,0.25)" title="Violeta"></div>
+                    <div class="dcw" style="background:#00f2ff" data-color="#00f2ff" data-ga="rgba(0,242,255,0.9)" data-gb="rgba(0,242,255,0.55)" data-gc="rgba(0,242,255,0.25)" title="Cyan"></div>
+                    <div class="dcw" style="background:#ff6b35" data-color="#ff6b35" data-ga="rgba(255,107,53,0.9)" data-gb="rgba(255,107,53,0.55)" data-gc="rgba(255,107,53,0.25)" title="Naranja"></div>
+                    <div class="dcw" style="background:#ffd700" data-color="#ffd700" data-ga="rgba(255,215,0,0.9)" data-gb="rgba(255,215,0,0.55)" data-gc="rgba(255,215,0,0.25)" title="Dorado"></div>
+                    <div class="dcw" style="background:#37ff00" data-color="#37ff00" data-ga="rgba(55,255,0,0.9)" data-gb="rgba(55,255,0,0.55)" data-gc="rgba(55,255,0,0.25)" title="Verde"></div>
+                    <div class="dcw" style="background:#ff2d78" data-color="#ff2d78" data-ga="rgba(255,45,120,0.9)" data-gb="rgba(255,45,120,0.55)" data-gc="rgba(255,45,120,0.25)" title="Rosa"></div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -217,6 +391,103 @@
         </div>
     </div>
 
+    <!-- OVERLAYS DE CLASES -->
+    <div class="clase-overlay" id="clase-guerrero">
+        <button class="clase-cerrar" onclick="cerrarClase()">&#8592; VOLVER</button>
+        <div class="clase-inner">
+            <div class="clase-header"><span class="clase-symbol">&#9800;</span><div><span class="clase-signo-text">ARIES &middot; LEO &middot; TAURO</span><h2 class="clase-nombre">GUERRERO</h2></div></div>
+            <p class="clase-prueba">Primera Prueba: El León de Nemea</p>
+            <p class="clase-lore">Forjado en el fuego de la primera batalla, el Guerrero encarna la fuerza bruta del zodíaco. Ningún monstruo puede detener su avance. Cada ciclo lo afila contra las estrellas.</p>
+            <div class="clase-stats">
+                <div class="stat-row"><span class="stat-name">Fuerza</span><div class="stat-bar-bg"><div class="stat-bar-fill" style="width:92%"></div></div><span class="stat-val">92</span></div>
+                <div class="stat-row"><span class="stat-name">Magia</span><div class="stat-bar-bg"><div class="stat-bar-fill" style="width:25%"></div></div><span class="stat-val">25</span></div>
+                <div class="stat-row"><span class="stat-name">Agilidad</span><div class="stat-bar-bg"><div class="stat-bar-fill" style="width:60%"></div></div><span class="stat-val">60</span></div>
+                <div class="stat-row"><span class="stat-name">Sigilo</span><div class="stat-bar-bg"><div class="stat-bar-fill" style="width:20%"></div></div><span class="stat-val">20</span></div>
+            </div>
+            <span class="clase-hab-title">HABILIDADES ÚNICAS</span>
+            <div class="clase-hab-list"><div class="clase-hab">Furia Olímpica</div><div class="clase-hab">Piel de Nemea</div><div class="clase-hab">Golpe Sísmico</div></div>
+        </div>
+    </div>
+    <div class="clase-overlay" id="clase-mago">
+        <button class="clase-cerrar" onclick="cerrarClase()">&#8592; VOLVER</button>
+        <div class="clase-inner">
+            <div class="clase-header"><span class="clase-symbol">&#9810;</span><div><span class="clase-signo-text">ACUARIO &middot; ESCORPIO &middot; PISCIS</span><h2 class="clase-nombre">MAGO</h2></div></div>
+            <p class="clase-prueba">Segunda Prueba: La Hidra de Lerna</p>
+            <p class="clase-lore">Donde otros ven caos, el Mago ve patrones escritos en las estrellas. Su poder arcano nace de los secretos que los dioses ocultaron en las constelaciones.</p>
+            <div class="clase-stats">
+                <div class="stat-row"><span class="stat-name">Fuerza</span><div class="stat-bar-bg"><div class="stat-bar-fill" style="width:30%"></div></div><span class="stat-val">30</span></div>
+                <div class="stat-row"><span class="stat-name">Magia</span><div class="stat-bar-bg"><div class="stat-bar-fill" style="width:97%"></div></div><span class="stat-val">97</span></div>
+                <div class="stat-row"><span class="stat-name">Agilidad</span><div class="stat-bar-bg"><div class="stat-bar-fill" style="width:45%"></div></div><span class="stat-val">45</span></div>
+                <div class="stat-row"><span class="stat-name">Sigilo</span><div class="stat-bar-bg"><div class="stat-bar-fill" style="width:55%"></div></div><span class="stat-val">55</span></div>
+            </div>
+            <span class="clase-hab-title">HABILIDADES ÚNICAS</span>
+            <div class="clase-hab-list"><div class="clase-hab">Vínculo Estelar</div><div class="clase-hab">Tormenta Arcana</div><div class="clase-hab">Espejo de Destino</div></div>
+        </div>
+    </div>
+    <div class="clase-overlay" id="clase-arquera">
+        <button class="clase-cerrar" onclick="cerrarClase()">&#8592; VOLVER</button>
+        <div class="clase-inner">
+            <div class="clase-header"><span class="clase-symbol">&#9808;</span><div><span class="clase-signo-text">SAGITARIO &middot; VIRGO &middot; LIBRA</span><h2 class="clase-nombre">ARQUERA</h2></div></div>
+            <p class="clase-prueba">Tercera Prueba: La Cierva de Cerinea</p>
+            <p class="clase-lore">Nacida bajo la flecha de Sagitario, la Arquera nunca yerra. Su mirada atraviesa el velo entre mundos, cazando no solo cuerpos sino destinos.</p>
+            <div class="clase-stats">
+                <div class="stat-row"><span class="stat-name">Fuerza</span><div class="stat-bar-bg"><div class="stat-bar-fill" style="width:55%"></div></div><span class="stat-val">55</span></div>
+                <div class="stat-row"><span class="stat-name">Magia</span><div class="stat-bar-bg"><div class="stat-bar-fill" style="width:60%"></div></div><span class="stat-val">60</span></div>
+                <div class="stat-row"><span class="stat-name">Agilidad</span><div class="stat-bar-bg"><div class="stat-bar-fill" style="width:90%"></div></div><span class="stat-val">90</span></div>
+                <div class="stat-row"><span class="stat-name">Sigilo</span><div class="stat-bar-bg"><div class="stat-bar-fill" style="width:72%"></div></div><span class="stat-val">72</span></div>
+            </div>
+            <span class="clase-hab-title">HABILIDADES ÚNICAS</span>
+            <div class="clase-hab-list"><div class="clase-hab">Flecha del Oráculo</div><div class="clase-hab">Paso Celestial</div><div class="clase-hab">Lluvia de Estrellas</div></div>
+        </div>
+    </div>
+    <div class="clase-overlay" id="clase-picaro">
+        <button class="clase-cerrar" onclick="cerrarClase()">&#8592; VOLVER</button>
+        <div class="clase-inner">
+            <div class="clase-header"><span class="clase-symbol">&#9802;</span><div><span class="clase-signo-text">GÉMINIS &middot; LIBRA &middot; ESCORPIO</span><h2 class="clase-nombre">PÍCARO</h2></div></div>
+            <p class="clase-prueba">Cuarta Prueba: El Jabalí de Erimanto</p>
+            <p class="clase-lore">El Pícaro existe entre sombras y estrellas. Su dualidad geminiana le permite ser dos cosas a la vez: invisible e imparable, mortal e inmortal.</p>
+            <div class="clase-stats">
+                <div class="stat-row"><span class="stat-name">Fuerza</span><div class="stat-bar-bg"><div class="stat-bar-fill" style="width:50%"></div></div><span class="stat-val">50</span></div>
+                <div class="stat-row"><span class="stat-name">Magia</span><div class="stat-bar-bg"><div class="stat-bar-fill" style="width:65%"></div></div><span class="stat-val">65</span></div>
+                <div class="stat-row"><span class="stat-name">Agilidad</span><div class="stat-bar-bg"><div class="stat-bar-fill" style="width:88%"></div></div><span class="stat-val">88</span></div>
+                <div class="stat-row"><span class="stat-name">Sigilo</span><div class="stat-bar-bg"><div class="stat-bar-fill" style="width:95%"></div></div><span class="stat-val">95</span></div>
+            </div>
+            <span class="clase-hab-title">HABILIDADES ÚNICAS</span>
+            <div class="clase-hab-list"><div class="clase-hab">Danza de Sombras</div><div class="clase-hab">Robo de Destino</div><div class="clase-hab">Dualidad Geminiana</div></div>
+        </div>
+    </div>
+
     <script type="module" src="/src/main.js"></script>
-<script>window.addEventListener('click', e => console.log('CLICK ON:', e.target));</script></body>
+    <script type="module">
+        import { initScrolly } from '/src/scrolly.js';
+        initScrolly();
+    </script>
+    <script>
+        function abrirClase(id) {
+            document.querySelectorAll('.clase-overlay').forEach(el => el.classList.remove('activa'));
+            const el = document.getElementById('clase-' + id);
+            if (el) { el.classList.add('activa'); document.body.style.overflow = 'hidden'; }
+        }
+        function cerrarClase() {
+            document.querySelectorAll('.clase-overlay').forEach(el => el.classList.remove('activa'));
+            document.body.style.overflow = '';
+        }
+        function scrollyIr(i) {
+            window.dispatchEvent(new CustomEvent('scrolly-goto', { detail: { index: i } }));
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.dcw').forEach(sw => {
+                sw.addEventListener('click', () => {
+                    document.querySelectorAll('.dcw').forEach(s => s.classList.remove('active'));
+                    sw.classList.add('active');
+                    const r = document.documentElement.style;
+                    r.setProperty('--dot-color', sw.dataset.color);
+                    r.setProperty('--dot-glow-a', sw.dataset.ga);
+                    r.setProperty('--dot-glow-b', sw.dataset.gb);
+                    r.setProperty('--dot-glow-c', sw.dataset.gc);
+                });
+            });
+        });
+    </script>
+</body>
 </html>
