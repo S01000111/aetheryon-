@@ -2,12 +2,12 @@ import * as THREE from 'three';
 
 // ── CONFIG ────────────────────────────────────────────────────────────────────
 const cfg = {
-    SIM_RES: 64, DYE_RES: 256,
+    SIM_RES: 128, DYE_RES: 512,
     DISS: 0.99, VEL_DISS: 0.98,
     PRESSURE_ITER: 20, CURL: 16,
     RADIUS: 0.005, FORCE: 6000,
-    GLOW: 0.1, CONTRAST: 1.2, SAT: 1.3,
-    SPEED: 1.6,
+    GLOW: 0.1, CONTRAST: 1.2, SAT: 1.3, NOISE: 0.05,
+    SPEED: 1.0,
     MIX: false, BG: false, BORDER: true,
     INFLOW: 0.6, BOX_DIR: 'left', BOX_SPEED: 7.0, BOX_SPREAD: 0.5,
     LAZY: false, LAZY_VAL: 0.10, VISC: 0.0, JELLY: false,
@@ -137,7 +137,12 @@ const displayFS = `
 precision highp float;
 varying vec2 vUv;
 uniform sampler2D uTex;
-uniform float uGlow, uContrast, uSat, uAdvBloom;
+uniform float uGlow, uContrast, uSat, uAdvBloom, uNoise, uTime;
+
+float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
 void main(){
     vec3 c = texture2D(uTex, vUv).rgb * uGlow;
     
@@ -154,6 +159,11 @@ void main(){
     float g = dot(c, vec3(0.299, 0.587, 0.114));
     c = mix(vec3(g), c, uSat);
     c = (c - 0.5) * uContrast + 0.5;
+    
+    // Noise animado tipo Film Grain
+    float n = hash(vUv * 100.0 + uTime) - 0.5;
+    c += n * uNoise;
+    
     gl_FragColor = vec4(c, 1.0);
 }`;
 
@@ -191,6 +201,7 @@ class ColorPicker {
         this.tWell = null;
         this.tArr = null;
         this.tIdx = null;
+        this.originalColor = new THREE.Color();
         
         this.drawWheel();
         
@@ -200,8 +211,8 @@ class ColorPicker {
         window.addEventListener('mouseup', () => isDragging = false);
         this.canvas.addEventListener('mousemove', e => { if(isDragging) this.pick(e); });
         
-        document.getElementById('cp-cancel').onclick = () => this.close(false);
-        document.getElementById('cp-apply').onclick = () => this.close(true);
+        document.getElementById('cp-cancel').onclick = () => this.cancel();
+        document.getElementById('cp-apply').onclick = () => this.close();
     }
     
     drawWheel() {
@@ -252,11 +263,50 @@ class ColorPicker {
         this.tWell = well;
         this.tArr = arr;
         this.tIdx = idx;
+        this.originalColor.copy(arr[idx]);
         this.modal.style.display = 'block';
     }
-    
-    close(apply) {
+
+    cancel() {
+        if (!this.tArr || this.tIdx === null) return;
         this.modal.style.display = 'none';
+        
+        const startColor = this.tArr[this.tIdx].clone();
+        const targetColor = this.originalColor.clone();
+        const startTime = performance.now();
+        const duration = 500;
+        
+        const arr = this.tArr;
+        const idx = this.tIdx;
+        const well = this.tWell;
+        
+        const lerpLoop = (now) => {
+            const t = Math.min((now - startTime) / duration, 1.0);
+            const easeOut = Math.sin(t * Math.PI / 2);
+            
+            const current = startColor.clone().lerp(targetColor, easeOut);
+            arr[idx].copy(current);
+            
+            if (well) {
+                const hex = '#' + current.getHexString();
+                well.style.background = hex;
+            }
+
+            if (t < 1.0) {
+                requestAnimationFrame(lerpLoop);
+            }
+        };
+        requestAnimationFrame(lerpLoop);
+        
+        this.tArr = null;
+        this.tIdx = null;
+        this.tWell = null;
+    }
+    
+    close() {
+        this.modal.style.display = 'none';
+        this.tArr = null;
+        this.tIdx = null;
         this.tWell = null;
     }
 
@@ -369,7 +419,7 @@ class FluidEngine {
             uniforms: { uVel:{value:null}, uCurl:{value:null}, uTex:{value:tex}, uCurlScale:{value:cfg.CURL}, uDt:{value:0.016} }
         });
         this.mDisp = new THREE.ShaderMaterial({ vertexShader: baseVS, fragmentShader: displayFS,
-            uniforms: { uTex:{value:null}, uGlow:{value:cfg.GLOW}, uContrast:{value:cfg.CONTRAST}, uSat:{value:cfg.SAT}, uAdvBloom:{value:0.0} }
+            uniforms: { uTex:{value:null}, uGlow:{value:cfg.GLOW}, uContrast:{value:cfg.CONTRAST}, uSat:{value:cfg.SAT}, uAdvBloom:{value:0.0}, uNoise:{value:cfg.NOISE}, uTime:{value:0.0} }
         });
         this.mBlur = new THREE.ShaderMaterial({ vertexShader: baseVS, fragmentShader: blurFS,
             uniforms: { uTex:{value:null}, uTexSize:{value:tex}, uAmt:{value:0.0} }
@@ -390,9 +440,10 @@ class FluidEngine {
         });
 
         // Sliders
-        this.sl('p-glow',     v => { cfg.GLOW     = v; this.mDisp.uniforms.uGlow.value     = v; });
+        this.sl('p-glow',     v => { cfg.GLOW      = v; this.mDisp.uniforms.uGlow.value = v; });
         this.sl('p-contrast', v => { cfg.CONTRAST  = v; this.mDisp.uniforms.uContrast.value = v; });
-        this.sl('p-sat',      v => { cfg.SAT       = v; this.mDisp.uniforms.uSat.value      = v; });
+        this.sl('p-sat',      v => { cfg.SAT       = v; this.mDisp.uniforms.uSat.value = v; });
+        this.sl('p-noise',    v => { cfg.NOISE     = v; this.mDisp.uniforms.uNoise.value = v; });
         this.sl('p-vort',     v => { cfg.CURL      = v; this.mVort.uniforms.uCurlScale.value = v; });
         this.sl('p-diss',     v => { cfg.DISS      = v; });
         this.sl('p-speed',    v => { cfg.SPEED     = v; });
@@ -680,6 +731,7 @@ class FluidEngine {
 
         // DISPLAY
         this.mDisp.uniforms.uTex.value = this.bDens.read.texture;
+        this.mDisp.uniforms.uTime.value = performance.now() / 1000.0;
         this.pass(this.mDisp, null);
 
         // BORDER
