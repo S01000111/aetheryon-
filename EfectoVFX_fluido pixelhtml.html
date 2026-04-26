@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Stable Fluids Working Version</title>
+<style>
+body { margin:0; overflow:hidden; background:black; }
+canvas { display:block; }
+#ui{
+ position:absolute; top:10px; left:10px;
+ color:white; font-family:sans-serif;
+}
+</style>
+</head>
+<body>
+
+<div id="ui">Drag mouse → fluid visible</div>
+<canvas id="c"></canvas>
+
+<script>
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+
+canvas.width = innerWidth;
+canvas.height = innerHeight;
+
+const N = 100;
+
+// velocity + density
+let vx = Array(N*N).fill(0);
+let vy = Array(N*N).fill(0);
+let dens = Array(N*N).fill(0);
+
+let pvx = [...vx];
+let pvy = [...vy];
+let pdens = [...dens];
+
+function IX(x,y){ return x + y*N; }
+
+// mouse
+let mouse = {x:0,y:0,down:false};
+
+canvas.onmousemove = e=>{
+ mouse.x = e.clientX/canvas.width;
+ mouse.y = e.clientY/canvas.height;
+ if(mouse.down) inject();
+};
+canvas.onmousedown=()=>mouse.down=true;
+canvas.onmouseup=()=>mouse.down=false;
+
+function inject(){
+ let i = Math.floor(mouse.x*N);
+ let j = Math.floor(mouse.y*N);
+
+ for(let a=-2;a<=2;a++){
+  for(let b=-2;b<=2;b++){
+   let x=i+a, y=j+b;
+   if(x<0||y<0||x>=N||y>=N) continue;
+
+   let id = IX(x,y);
+   dens[id] += 50;
+   vx[id] += (Math.random()-0.5)*5;
+   vy[id] += (Math.random()-0.5)*5;
+  }
+ }
+}
+
+// advection
+function advect(){
+ for(let y=1;y<N-1;y++){
+  for(let x=1;x<N-1;x++){
+
+   let i = IX(x,y);
+
+   let xback = x - vx[i]*0.05;
+   let yback = y - vy[i]*0.05;
+
+   xback = Math.max(0,Math.min(N-1,xback));
+   yback = Math.max(0,Math.min(N-1,yback));
+
+   let x0 = Math.floor(xback);
+   let y0 = Math.floor(yback);
+
+   pdens[i] = dens[IX(x0,y0)];
+  }
+ }
+
+ for(let i=0;i<dens.length;i++){
+  dens[i] = pdens[i]*0.99;
+ }
+}
+
+// simple pressure-like smoothing
+function diffuse(){
+ for(let y=1;y<N-1;y++){
+  for(let x=1;x<N-1;x++){
+   let i = IX(x,y);
+
+   vx[i] = (vx[i] + vx[IX(x+1,y)] + vx[IX(x-1,y)]) * 0.33;
+   vy[i] = (vy[i] + vy[IX(x,y+1)] + vy[IX(x,y-1)]) * 0.33;
+  }
+ }
+}
+
+// render
+function draw(){
+ ctx.fillStyle="rgba(0,0,0,0.2)";
+ ctx.fillRect(0,0,canvas.width,canvas.height);
+
+ for(let y=0;y<N;y++){
+  for(let x=0;x<N;x++){
+
+   let i = IX(x,y);
+   let d = dens[i];
+
+   let px = x/N * canvas.width;
+   let py = y/N * canvas.height;
+
+   ctx.fillStyle = `rgba(0,150,255,${Math.min(d/100,1)})`;
+   ctx.fillRect(px,py,6,6);
+  }
+ }
+}
+
+function loop(){
+ advect();
+ diffuse();
+ draw();
+ requestAnimationFrame(loop);
+}
+loop();
+</script>
+
+</body>
+</html>

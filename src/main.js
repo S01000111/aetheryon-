@@ -1,0 +1,496 @@
+import * as THREE from 'three';
+
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+const cfg = {
+    SIM_RES: 64, DYE_RES: 256,
+    DISS: 0.99, VEL_DISS: 0.98,
+    PRESSURE_ITER: 20, CURL: 16,
+    RADIUS: 0.005, FORCE: 6000,
+    GLOW: 0.1, CONTRAST: 1.2, SAT: 1.3,
+    SPEED: 1.6,
+    MIX: false, BG: true, BORDER: true,
+    INFLOW: 0.6,
+    B_THICK: 31, B_INT: 0.15, B_SPD: 0.4,
+    ACTIVE_IDX: 0,
+    mainColors: [
+        new THREE.Color(0x6600ff),
+        new THREE.Color(0x00b3ff),
+        new THREE.Color(0xff8800),
+        new THREE.Color(0x37ff00),
+        new THREE.Color(0x82614f),
+    ],
+    boxColors: [
+        new THREE.Color(0x6600ff),
+        new THREE.Color(0x00b3ff),
+        new THREE.Color(0xff8800),
+        new THREE.Color(0x37ff00),
+        new THREE.Color(0x82614f),
+    ],
+};
+
+// ── SHADERS ───────────────────────────────────────────────────────────────────
+const baseVS = `
+varying vec2 vUv;
+void main(){ vUv = uv; gl_Position = vec4(position, 1.0); }
+`;
+
+const advFS = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uVel, uSrc;
+uniform vec2 uTex;
+uniform float uDt, uDiss;
+void main(){
+    vec2 pos = vUv - uDt * texture2D(uVel, vUv).xy * uTex;
+    gl_FragColor = uDiss * texture2D(uSrc, pos);
+}`;
+
+const splatFS = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uTgt;
+uniform vec2 uPt;
+uniform vec3 uCol;
+uniform float uRad, uAsp;
+void main(){
+    vec2 p = vUv - uPt;
+    p.x *= uAsp;
+    float d = exp(-dot(p,p) / uRad);
+    gl_FragColor = vec4(texture2D(uTgt, vUv).xyz + d * uCol, 1.0);
+}`;
+
+const divFS = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uVel;
+uniform vec2 uTex;
+void main(){
+    float L = texture2D(uVel, vUv - vec2(uTex.x, 0.0)).x;
+    float R = texture2D(uVel, vUv + vec2(uTex.x, 0.0)).x;
+    float T = texture2D(uVel, vUv + vec2(0.0, uTex.y)).y;
+    float B = texture2D(uVel, vUv - vec2(0.0, uTex.y)).y;
+    gl_FragColor = vec4(0.5 * (R - L + T - B), 0.0, 0.0, 1.0);
+}`;
+
+const pressFS = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uPrs, uDiv;
+uniform vec2 uTex;
+void main(){
+    float L = texture2D(uPrs, vUv - vec2(uTex.x, 0.0)).x;
+    float R = texture2D(uPrs, vUv + vec2(uTex.x, 0.0)).x;
+    float T = texture2D(uPrs, vUv + vec2(0.0, uTex.y)).x;
+    float B = texture2D(uPrs, vUv - vec2(0.0, uTex.y)).x;
+    float d = texture2D(uDiv, vUv).x;
+    gl_FragColor = vec4((L + R + B + T - d) * 0.25, 0.0, 0.0, 1.0);
+}`;
+
+const gradFS = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uPrs, uVel;
+uniform vec2 uTex;
+void main(){
+    float L = texture2D(uPrs, vUv - vec2(uTex.x, 0.0)).x;
+    float R = texture2D(uPrs, vUv + vec2(uTex.x, 0.0)).x;
+    float T = texture2D(uPrs, vUv + vec2(0.0, uTex.y)).x;
+    float B = texture2D(uPrs, vUv - vec2(0.0, uTex.y)).x;
+    vec2 v = texture2D(uVel, vUv).xy;
+    gl_FragColor = vec4(v - vec2(R - L, T - B) * 0.5, 0.0, 1.0);
+}`;
+
+const curlFS = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uVel;
+uniform vec2 uTex;
+void main(){
+    float L = texture2D(uVel, vUv - vec2(uTex.x, 0.0)).y;
+    float R = texture2D(uVel, vUv + vec2(uTex.x, 0.0)).y;
+    float T = texture2D(uVel, vUv + vec2(0.0, uTex.y)).x;
+    float B = texture2D(uVel, vUv - vec2(0.0, uTex.y)).x;
+    gl_FragColor = vec4(0.5 * (R - L + T - B), 0.0, 0.0, 1.0);
+}`;
+
+const vortFS = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uVel, uCurl;
+uniform float uCurlScale, uDt;
+uniform vec2 uTex;
+void main(){
+    float L = texture2D(uCurl, vUv - vec2(uTex.x, 0.0)).x;
+    float R = texture2D(uCurl, vUv + vec2(uTex.x, 0.0)).x;
+    float T = texture2D(uCurl, vUv + vec2(0.0, uTex.y)).x;
+    float B = texture2D(uCurl, vUv - vec2(0.0, uTex.y)).x;
+    float C = texture2D(uCurl, vUv).x;
+    vec2 f = vec2(abs(T) - abs(B), abs(R) - abs(L));
+    f /= length(f) + 0.00001;
+    f *= uCurlScale * C;
+    vec2 v = texture2D(uVel, vUv).xy;
+    gl_FragColor = vec4(v + f * uDt, 0.0, 1.0);
+}`;
+
+const displayFS = `
+precision highp float;
+varying vec2 vUv;
+uniform sampler2D uTex;
+uniform float uGlow, uContrast, uSat;
+void main(){
+    vec3 c = texture2D(uTex, vUv).rgb * uGlow;
+    float g = dot(c, vec3(0.299, 0.587, 0.114));
+    c = mix(vec3(g), c, uSat);
+    c = (c - 0.5) * uContrast + 0.5;
+    gl_FragColor = vec4(c, 1.0);
+}`;
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function hexToColor(hex) {
+    // Asegurar formato #RRGGBB sin alfa
+    const clean = hex.slice(0, 7);
+    return new THREE.Color(clean);
+}
+
+// ── MOTOR ─────────────────────────────────────────────────────────────────────
+class FluidEngine {
+    constructor() {
+        this.renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('app').appendChild(this.renderer.domElement);
+
+        this.camera = new THREE.Camera();
+        this.scene  = new THREE.Scene();
+        this.quad   = new THREE.Mesh(new THREE.PlaneGeometry(2, 2));
+        this.scene.add(this.quad);
+
+        this.buildBuffers();
+        this.buildMaterials();
+        this.buildUI();
+        this.buildBorderFX();
+
+        this.mouse     = new THREE.Vector2(-1, -1);
+        this.prevMouse = new THREE.Vector2(-1, -1);
+        this.queue     = [];
+        this.t         = 0;
+
+        window.addEventListener('mousemove', e => {
+            const x = e.clientX / window.innerWidth;
+            const y = 1 - e.clientY / window.innerHeight;
+            this.mouse.set(x, y);
+            if (this.prevMouse.x >= 0) {
+                const dx = (x - this.prevMouse.x) * cfg.FORCE * (cfg.SPEED / 5);
+                const dy = (y - this.prevMouse.y) * cfg.FORCE * (cfg.SPEED / 5);
+                if (Math.abs(dx) + Math.abs(dy) > 0.0001) {
+                    this.queue.push({ x, y, dx, dy });
+                }
+            }
+            this.prevMouse.set(x, y);
+        });
+
+        this.animate();
+    }
+
+    dblBuf(w, h) {
+        const p = { type: THREE.FloatType, format: THREE.RGBAFormat, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter };
+        return {
+            read:  new THREE.WebGLRenderTarget(w, h, p),
+            write: new THREE.WebGLRenderTarget(w, h, p),
+            swap() { const t = this.read; this.read = this.write; this.write = t; }
+        };
+    }
+
+    buildBuffers() {
+        const p = { type: THREE.FloatType, format: THREE.RGBAFormat, minFilter: THREE.LinearFilter };
+        this.bDens = this.dblBuf(cfg.DYE_RES, cfg.DYE_RES);
+        this.bVel  = this.dblBuf(cfg.SIM_RES, cfg.SIM_RES);
+        this.bPrs  = this.dblBuf(cfg.SIM_RES, cfg.SIM_RES);
+        this.bDiv  = new THREE.WebGLRenderTarget(cfg.SIM_RES, cfg.SIM_RES, p);
+        this.bCurl = new THREE.WebGLRenderTarget(cfg.SIM_RES, cfg.SIM_RES, p);
+    }
+
+    rebuildBuffers() {
+        [this.bDens, this.bVel, this.bPrs].forEach(b => { b.read.dispose(); b.write.dispose(); });
+        [this.bDiv, this.bCurl].forEach(b => b.dispose());
+        this.buildBuffers();
+        this.buildMaterials();
+    }
+
+    buildMaterials() {
+        const tex = new THREE.Vector2(1 / cfg.SIM_RES, 1 / cfg.SIM_RES);
+        const asp = window.innerWidth / window.innerHeight;
+
+        this.mAdv = new THREE.ShaderMaterial({ vertexShader: baseVS, fragmentShader: advFS,
+            uniforms: { uVel:{value:null}, uSrc:{value:null}, uTex:{value:tex}, uDt:{value:0.016}, uDiss:{value:cfg.DISS} }
+        });
+        this.mSplat = new THREE.ShaderMaterial({ vertexShader: baseVS, fragmentShader: splatFS,
+            uniforms: { uTgt:{value:null}, uPt:{value:new THREE.Vector2()}, uCol:{value:new THREE.Vector3()}, uRad:{value:cfg.RADIUS}, uAsp:{value:asp} }
+        });
+        this.mDiv = new THREE.ShaderMaterial({ vertexShader: baseVS, fragmentShader: divFS,
+            uniforms: { uVel:{value:null}, uTex:{value:tex} }
+        });
+        this.mPrs = new THREE.ShaderMaterial({ vertexShader: baseVS, fragmentShader: pressFS,
+            uniforms: { uPrs:{value:null}, uDiv:{value:null}, uTex:{value:tex} }
+        });
+        this.mGrad = new THREE.ShaderMaterial({ vertexShader: baseVS, fragmentShader: gradFS,
+            uniforms: { uPrs:{value:null}, uVel:{value:null}, uTex:{value:tex} }
+        });
+        this.mCurl = new THREE.ShaderMaterial({ vertexShader: baseVS, fragmentShader: curlFS,
+            uniforms: { uVel:{value:null}, uTex:{value:tex} }
+        });
+        this.mVort = new THREE.ShaderMaterial({ vertexShader: baseVS, fragmentShader: vortFS,
+            uniforms: { uVel:{value:null}, uCurl:{value:null}, uTex:{value:tex}, uCurlScale:{value:cfg.CURL}, uDt:{value:0.016} }
+        });
+        this.mDisp = new THREE.ShaderMaterial({ vertexShader: baseVS, fragmentShader: displayFS,
+            uniforms: { uTex:{value:null}, uGlow:{value:cfg.GLOW}, uContrast:{value:cfg.CONTRAST}, uSat:{value:cfg.SAT} }
+        });
+    }
+
+    // ── UI ────────────────────────────────────────────────────────────────────
+    buildUI() {
+        // Fidelity
+        document.querySelectorAll('.fid-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.fid-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                cfg.SIM_RES = parseInt(btn.dataset.sim);
+                cfg.DYE_RES = parseInt(btn.dataset.dye);
+                this.rebuildBuffers();
+            });
+        });
+
+        // Sliders
+        this.sl('p-glow',     v => { cfg.GLOW     = v; this.mDisp.uniforms.uGlow.value     = v; });
+        this.sl('p-contrast', v => { cfg.CONTRAST  = v; this.mDisp.uniforms.uContrast.value = v; });
+        this.sl('p-sat',      v => { cfg.SAT       = v; this.mDisp.uniforms.uSat.value      = v; });
+        this.sl('p-vort',     v => { cfg.CURL      = v; this.mVort.uniforms.uCurlScale.value = v; });
+        this.sl('p-diss',     v => { cfg.DISS      = v; });
+        this.sl('p-speed',    v => { cfg.SPEED     = v; });
+        this.sl('p-inflow',   v => { cfg.INFLOW    = v; });
+        this.sl('p-bthick',   v => { cfg.B_THICK   = v; });
+        this.sl('p-bint',     v => { cfg.B_INT     = v; });
+        this.sl('p-bspd',     v => { cfg.B_SPD     = v; });
+
+        // Toggles
+        this.tog('tog-mix',    v => { cfg.MIX    = v; });
+        this.tog('tog-bg',     v => { cfg.BG     = v; });
+        this.tog('tog-border', v => {
+            cfg.BORDER = v;
+            document.getElementById('border-fx').style.display = v ? 'block' : 'none';
+        });
+
+        // Paletas con input[type=color] nativo
+        this.initPalette('main-palette', cfg.mainColors, true);
+        document.getElementById('add-main').onclick = () => this.addWell('main-palette', cfg.mainColors, true);
+        document.getElementById('rem-main').onclick = () => this.remWell('main-palette', cfg.mainColors);
+
+        this.initPalette('box-palette', cfg.boxColors, false);
+        document.getElementById('add-box').onclick  = () => this.addWell('box-palette', cfg.boxColors, false);
+        document.getElementById('rem-box').onclick  = () => this.remWell('box-palette', cfg.boxColors);
+    }
+
+    sl(id, cb) {
+        const el   = document.getElementById(id);
+        const valId = 'v-' + id.split('-')[1];
+        const disp = document.getElementById(valId);
+        if (!el) return;
+        el.addEventListener('input', e => {
+            const v = parseFloat(e.target.value);
+            if (disp) disp.textContent = id === 'p-vort' ? Math.round(v) : v.toFixed(2);
+            cb(v);
+        });
+    }
+
+    tog(id, cb) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('click', () => {
+            el.classList.toggle('on');
+            cb(el.classList.contains('on'));
+        });
+    }
+
+    initPalette(containerId, arr, isMain) {
+        const wells = document.querySelectorAll(`#${containerId} .${isMain ? 'cw' : 'bcw'}`);
+        wells.forEach((well, i) => this.attachWell(well, i, arr, isMain));
+    }
+
+    attachWell(well, i, arr, isMain) {
+        const input = well.querySelector('input[type=color]');
+        if (!input) return;
+
+        // Cuando cambia el color en el picker nativo
+        input.addEventListener('input', e => {
+            const hex = e.target.value; // siempre #RRGGBB
+            well.style.background = hex;
+            arr[i] = hexToColor(hex);
+        });
+
+        // Doble click → abre el color picker nativo
+        well.addEventListener('dblclick', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            input.click();
+        });
+
+        // Click simple → solo para paleta principal: seleccionar color
+        if (isMain) {
+            well.addEventListener('click', e => {
+                if (e.detail >= 2) return; // ignorar el click del dblclick
+                document.querySelectorAll('#main-palette .cw').forEach(w => w.classList.remove('sel'));
+                well.classList.add('sel');
+                cfg.ACTIVE_IDX = i;
+            });
+        }
+    }
+
+    addWell(containerId, arr, isMain) {
+        const wrap = document.getElementById(containerId);
+        const hex  = '#' + Math.floor(Math.random() * 0xFFFFFF).toString(16).padStart(6, '0');
+        const well = document.createElement('div');
+        well.className = isMain ? 'cw' : 'bcw';
+        well.style.background = hex;
+        const input = document.createElement('input');
+        input.type = 'color';
+        input.value = hex;
+        well.appendChild(input);
+        wrap.appendChild(well);
+        arr.push(hexToColor(hex));
+        this.attachWell(well, arr.length - 1, arr, isMain);
+    }
+
+    remWell(containerId, arr) {
+        const wrap  = document.getElementById(containerId);
+        const nodes = wrap.querySelectorAll('.cw, .bcw');
+        if (nodes.length <= 1) return;
+        nodes[nodes.length - 1].remove();
+        arr.pop();
+    }
+
+    // ── Border FX ─────────────────────────────────────────────────────────────
+    buildBorderFX() {
+        this.bfx  = document.getElementById('border-fx');
+        this.bctx = this.bfx.getContext('2d');
+        this.bfx.width  = window.innerWidth;
+        this.bfx.height = window.innerHeight;
+        // Mostrar el canvas de borde si está activo por defecto
+        if (cfg.BORDER) this.bfx.style.display = 'block';
+    }
+
+    drawBorder(t) {
+        const ctx = this.bctx;
+        const W   = this.bfx.width;
+        const H   = this.bfx.height;
+        const th  = cfg.B_THICK;
+        const pulse = (Math.sin(t * cfg.B_SPD * 2.5) * 0.5 + 0.5) * cfg.B_INT;
+        ctx.clearRect(0, 0, W, H);
+
+        const draw = (x0, y0, x1, y1, rx0, ry0, rx1, ry1, hex) => {
+            const r = parseInt(hex.slice(1,3),16);
+            const g = parseInt(hex.slice(3,5),16);
+            const b = parseInt(hex.slice(5,7),16);
+            const grad = ctx.createLinearGradient(rx0, ry0, rx1, ry1);
+            grad.addColorStop(0, `rgba(${r},${g},${b},${pulse})`);
+            grad.addColorStop(1, `rgba(${r},${g},${b},0)`);
+            ctx.fillStyle = grad;
+            ctx.fillRect(x0, y0, x1, y1);
+        };
+
+        draw(0,    0,    W,  th,     0, 0,    0, th,      '#00f2ff'); // top
+        draw(0,    H-th, W,  th,     0, H,    0, H-th,    '#00f2ff'); // bottom
+        draw(0,    0,    th, H,      0, 0,    th, 0,       '#7000ff'); // left
+        draw(W-th, 0,    th, H,      W, 0,    W-th, 0,    '#7000ff'); // right
+    }
+
+    // ── Render ────────────────────────────────────────────────────────────────
+    pass(mat, target) {
+        this.quad.material = mat;
+        this.renderer.setRenderTarget(target);
+        this.renderer.render(this.scene, this.camera);
+    }
+
+    splat(x, y, dx, dy, col, rad) {
+        const r = rad ?? cfg.RADIUS;
+
+        this.mSplat.uniforms.uTgt.value = this.bVel.read.texture;
+        this.mSplat.uniforms.uPt.value.set(x, y);
+        this.mSplat.uniforms.uCol.value.set(dx, dy, 0);
+        this.mSplat.uniforms.uRad.value = r;
+        this.pass(this.mSplat, this.bVel.write);
+        this.bVel.swap();
+
+        this.mSplat.uniforms.uTgt.value = this.bDens.read.texture;
+        this.mSplat.uniforms.uCol.value.set(col.r, col.g, col.b);
+        this.pass(this.mSplat, this.bDens.write);
+        this.bDens.swap();
+    }
+
+    animate() {
+        requestAnimationFrame(() => this.animate());
+        this.t += 0.016;
+
+        // BOX SMOKE: flujo denso desde el lateral izquierdo
+        if (cfg.BG) {
+            const n = Math.max(1, Math.round(cfg.INFLOW * 2));
+            for (let i = 0; i < n; i++) {
+                const y   = (i + Math.random()) / n;
+                const col = cfg.boxColors[Math.floor(Math.random() * cfg.boxColors.length)];
+                this.splat(0.005, y, 7 * cfg.INFLOW, (Math.random() - 0.5) * 1.5, col, 0.003);
+            }
+        }
+
+        // ADVECCIÓN
+        this.mAdv.uniforms.uVel.value  = this.bVel.read.texture;
+        this.mAdv.uniforms.uSrc.value  = this.bVel.read.texture;
+        this.mAdv.uniforms.uDiss.value = cfg.VEL_DISS;
+        this.pass(this.mAdv, this.bVel.write); this.bVel.swap();
+
+        this.mAdv.uniforms.uSrc.value  = this.bDens.read.texture;
+        this.mAdv.uniforms.uDiss.value = cfg.DISS;
+        this.pass(this.mAdv, this.bDens.write); this.bDens.swap();
+
+        // VORTICIDAD
+        this.mCurl.uniforms.uVel.value  = this.bVel.read.texture;
+        this.pass(this.mCurl, this.bCurl);
+        this.mVort.uniforms.uVel.value  = this.bVel.read.texture;
+        this.mVort.uniforms.uCurl.value = this.bCurl.texture;
+        this.pass(this.mVort, this.bVel.write); this.bVel.swap();
+
+        // SPLATS RATÓN
+        this.queue.forEach(s => {
+            let col;
+            if (cfg.BG) {
+                col = new THREE.Color(0, 0, 0); // solo empuja, no pinta
+            } else {
+                col = cfg.MIX
+                    ? cfg.mainColors[Math.floor(Math.random() * cfg.mainColors.length)]
+                    : (cfg.mainColors[cfg.ACTIVE_IDX] ?? cfg.mainColors[0]);
+            }
+            this.splat(s.x, s.y, s.dx, s.dy, col);
+        });
+        this.queue = [];
+
+        // PROYECCIÓN
+        this.mDiv.uniforms.uVel.value = this.bVel.read.texture;
+        this.pass(this.mDiv, this.bDiv);
+
+        for (let i = 0; i < cfg.PRESSURE_ITER; i++) {
+            this.mPrs.uniforms.uPrs.value = this.bPrs.read.texture;
+            this.mPrs.uniforms.uDiv.value = this.bDiv.texture;
+            this.pass(this.mPrs, this.bPrs.write); this.bPrs.swap();
+        }
+
+        this.mGrad.uniforms.uPrs.value = this.bPrs.read.texture;
+        this.mGrad.uniforms.uVel.value = this.bVel.read.texture;
+        this.pass(this.mGrad, this.bVel.write); this.bVel.swap();
+
+        // DISPLAY
+        this.mDisp.uniforms.uTex.value = this.bDens.read.texture;
+        this.pass(this.mDisp, null);
+
+        // BORDER
+        if (cfg.BORDER) this.drawBorder(this.t);
+    }
+}
+
+new FluidEngine();

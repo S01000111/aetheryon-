@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aetheryon by Mythos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root { --ac:#00f2ff; --bg:rgba(6,6,12,.97); --w:310px; }
+        *,*::before,*::after { box-sizing:border-box; }
+        body,html { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#000; font-family:'Outfit',sans-serif; color:#fff; }
+        #app { position:fixed; inset:0; z-index:0; }
+        #content { position:relative; z-index:1; pointer-events:none; padding:40px 80px; }
+        #content p.brand { color:var(--ac); letter-spacing:10px; font-size:13px; margin:0 0 4px; font-weight:300; }
+        #content h2 { font-size:88px; letter-spacing:-4px; margin:0; font-weight:700; line-height:.85; }
+
+        /* PANEL */
+        #panel {
+            position:fixed; top:20px; right:20px; width:var(--w);
+            background:var(--bg); backdrop-filter:blur(60px); -webkit-backdrop-filter:blur(60px);
+            border:1px solid rgba(255,255,255,.07); border-radius:22px;
+            z-index:100; box-shadow:0 40px 90px rgba(0,0,0,.95);
+            overflow:visible;
+            max-height:92vh;
+            transition:max-height .5s cubic-bezier(.16,1,.3,1), width .45s cubic-bezier(.16,1,.3,1);
+        }
+        #panel.collapsed { width:176px; max-height:54px; overflow:hidden; }
+        .ph { padding:16px 22px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; border-bottom:1px solid rgba(255,255,255,.04); border-radius:22px 22px 0 0; }
+        .ph h3 { margin:0; font-size:10px; letter-spacing:4px; text-transform:uppercase; color:var(--ac); }
+        .ph-icon { font-size:14px; opacity:.3; transition:.4s; }
+        #panel.collapsed .ph-icon { transform:rotate(180deg); }
+        .pb { padding:8px 22px 24px; overflow-y:auto; overflow-x:visible; scrollbar-width:none; max-height:calc(92vh - 56px); }
+        .pb::-webkit-scrollbar { display:none; }
+        #panel.collapsed .pb { display:none; }
+        .sec { margin-top:18px; border-top:1px solid rgba(255,255,255,.04); padding-top:14px; }
+        .sec:first-child { border-top:none; margin-top:0; padding-top:0; }
+        .sec-label { font-size:8.5px; opacity:.3; text-transform:uppercase; letter-spacing:2.5px; margin-bottom:12px; display:block; }
+
+        /* FIDELIDAD */
+        .fid-row { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+        .fid-btn { background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); padding:7px 4px; border-radius:10px; font-size:9px; cursor:pointer; text-align:center; transition:.3s; color:#fff; }
+        .fid-btn:hover { background:rgba(255,255,255,.07); }
+        .fid-btn.active { background:var(--ac); color:#000; border-color:var(--ac); font-weight:700; box-shadow:0 0 18px rgba(0,242,255,.3); }
+
+        /* TOGGLES */
+        .tog-row { display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,.02); padding:9px 13px; border-radius:11px; margin-bottom:6px; border:1px solid rgba(255,255,255,.04); }
+        .tog-lbl { font-size:10px; opacity:.85; }
+        .tog { width:32px; height:16px; background:rgba(255,255,255,.1); border-radius:16px; position:relative; cursor:pointer; transition:.4s; flex-shrink:0; }
+        .tog.on { background:var(--ac); }
+        .tog::after { content:''; position:absolute; top:2px; left:2px; width:12px; height:12px; background:#fff; border-radius:50%; transition:.4s; }
+        .tog.on::after { left:18px; }
+
+        /* SLIDERS */
+        .ctrl { margin-bottom:13px; }
+        .ctrl-info { display:flex; justify-content:space-between; font-size:10px; margin-bottom:6px; opacity:.6; }
+        .ctrl-info .val { color:var(--ac); font-family:'JetBrains Mono'; font-size:10px; }
+        input[type=range] { width:100%; appearance:none; background:rgba(255,255,255,.07); height:2px; outline:none; border-radius:2px; }
+        input[type=range]::-webkit-slider-thumb { appearance:none; width:11px; height:11px; background:#fff; border-radius:50%; cursor:pointer; border:2px solid var(--ac); }
+
+        /* COLOR WELLS */
+        .pal-wrap { display:flex; flex-wrap:wrap; gap:9px; }
+        .cw, .bcw { width:34px; height:34px; border-radius:50%; border:2px solid rgba(255,255,255,.12); cursor:pointer; transition:.25s; flex-shrink:0; position:relative; }
+        .cw:hover, .bcw:hover { transform:scale(1.1); }
+        .cw.sel { border-color:#fff; transform:scale(1.15); box-shadow:0 0 14px rgba(255,255,255,.25); }
+        /* Input de color oculto dentro de cada well */
+        .cw input[type=color], .bcw input[type=color] { position:absolute; inset:0; opacity:0; width:100%; height:100%; cursor:pointer; border:none; padding:0; }
+        .pal-btns { display:flex; gap:8px; margin-top:10px; }
+        .pal-btn { background:none; border:1px dashed rgba(255,255,255,.2); color:#fff; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:16px; line-height:26px; text-align:center; transition:.2s; }
+        .pal-btn:hover { background:rgba(255,255,255,.08); }
+
+        /* BORDER CANVAS */
+        #border-fx { position:fixed; inset:0; z-index:2; pointer-events:none; display:none; }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+    <div id="content">
+        <p class="brand">MYTHOS</p>
+        <h2>AETHERYON</h2>
+    </div>
+
+    <div id="panel" class="collapsed">
+        <div class="ph" onclick="document.getElementById('panel').classList.toggle('collapsed')">
+            <h3>Aetheryon <span style="font-weight:300;opacity:.35;">Elite</span></h3>
+            <span class="ph-icon">▲</span>
+        </div>
+        <div class="pb">
+
+            <div class="sec">
+                <span class="sec-label">Visual Fidelity</span>
+                <div class="fid-row">
+                    <div class="fid-btn active" data-sim="64"  data-dye="256">LOW</div>
+                    <div class="fid-btn" data-sim="128" data-dye="512">MED</div>
+                    <div class="fid-btn" data-sim="256" data-dye="1024">HIGH</div>
+                </div>
+            </div>
+
+            <div class="sec">
+                <span class="sec-label">Visual Mastering</span>
+                <div class="ctrl"><div class="ctrl-info">Neon Glow <span class="val" id="v-glow">0.1</span></div><input type="range" id="p-glow" min="0" max="4" step="0.1" value="0.1"></div>
+                <div class="ctrl"><div class="ctrl-info">Contrast <span class="val" id="v-contrast">1.2</span></div><input type="range" id="p-contrast" min="0.5" max="2.5" step="0.05" value="1.2"></div>
+                <div class="ctrl"><div class="ctrl-info">Saturation <span class="val" id="v-sat">1.3</span></div><input type="range" id="p-sat" min="0" max="3" step="0.05" value="1.3"></div>
+            </div>
+
+            <div class="sec">
+                <span class="sec-label">Physics Engine</span>
+                <div class="ctrl"><div class="ctrl-info">Turbulence <span class="val" id="v-vort">16</span></div><input type="range" id="p-vort" min="0" max="100" step="1" value="16"></div>
+                <div class="ctrl"><div class="ctrl-info">Persistence <span class="val" id="v-diss">0.99</span></div><input type="range" id="p-diss" min="0.9" max="0.999" step="0.001" value="0.99"></div>
+                <div class="ctrl"><div class="ctrl-info">Flow Speed <span class="val" id="v-speed">1.6</span></div><input type="range" id="p-speed" min="1" max="15" step="0.1" value="1.6"></div>
+            </div>
+
+            <div class="sec">
+                <span class="sec-label">Palette — Click: select · Dbl-click: edit</span>
+                <div class="tog-row" style="margin-bottom:12px;">
+                    <span class="tog-lbl">Dynamic Color Mix</span>
+                    <div id="tog-mix" class="tog"></div>
+                </div>
+                <div class="pal-wrap" id="main-palette">
+                    <div class="cw sel" style="background:#6600ff"><input type="color" value="#6600ff"></div>
+                    <div class="cw"     style="background:#00b3ff"><input type="color" value="#00b3ff"></div>
+                    <div class="cw"     style="background:#ff8800"><input type="color" value="#ff8800"></div>
+                    <div class="cw"     style="background:#37ff00"><input type="color" value="#37ff00"></div>
+                    <div class="cw"     style="background:#82614f"><input type="color" value="#82614f"></div>
+                </div>
+                <div class="pal-btns">
+                    <button class="pal-btn" id="add-main">+</button>
+                    <button class="pal-btn" id="rem-main">−</button>
+                </div>
+            </div>
+
+            <div class="sec">
+                <span class="sec-label">Box Smoke Mode</span>
+                <div class="tog-row">
+                    <span class="tog-lbl">Active Inflow</span>
+                    <div id="tog-bg" class="tog on"></div>
+                </div>
+                <div class="ctrl" style="margin-top:10px;">
+                    <div class="ctrl-info">Inflow Strength <span class="val" id="v-inflow">0.6</span></div>
+                    <input type="range" id="p-inflow" min="0.1" max="5" step="0.1" value="0.6">
+                </div>
+                <span class="sec-label" style="margin-top:10px;">Box Palette — Dbl-click to edit</span>
+                <div class="pal-wrap" id="box-palette">
+                    <div class="bcw" style="background:#6600ff"><input type="color" value="#6600ff"></div>
+                    <div class="bcw" style="background:#00b3ff"><input type="color" value="#00b3ff"></div>
+                    <div class="bcw" style="background:#ff8800"><input type="color" value="#ff8800"></div>
+                    <div class="bcw" style="background:#37ff00"><input type="color" value="#37ff00"></div>
+                    <div class="bcw" style="background:#82614f"><input type="color" value="#82614f"></div>
+                </div>
+                <div class="pal-btns">
+                    <button class="pal-btn" id="add-box">+</button>
+                    <button class="pal-btn" id="rem-box">−</button>
+                </div>
+            </div>
+
+            <div class="sec">
+                <span class="sec-label">Border Glow Effect</span>
+                <div class="tog-row">
+                    <span class="tog-lbl">Enable</span>
+                    <div id="tog-border" class="tog on"></div>
+                </div>
+                <div class="ctrl" style="margin-top:10px;">
+                    <div class="ctrl-info">Thickness <span class="val" id="v-bthick">31</span></div>
+                    <input type="range" id="p-bthick" min="5" max="250" step="1" value="31">
+                </div>
+                <div class="ctrl">
+                    <div class="ctrl-info">Intensity <span class="val" id="v-bint">0.15</span></div>
+                    <input type="range" id="p-bint" min="0" max="1" step="0.05" value="0.15">
+                </div>
+                <div class="ctrl">
+                    <div class="ctrl-info">Pulse Speed <span class="val" id="v-bspd">0.4</span></div>
+                    <input type="range" id="p-bspd" min="0.1" max="5" step="0.1" value="0.4">
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <canvas id="border-fx"></canvas>
+
+    <script type="module" src="/src/main.js"></script>
+</body>
+</html>
