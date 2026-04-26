@@ -62,13 +62,11 @@
 
         /* COLOR WELLS */
         .pal-wrap { display:flex; flex-wrap:wrap; gap:9px; }
-        .cw, .bcw { width:34px; height:34px; border-radius:50%; border:2px solid rgba(255,255,255,.12); cursor:pointer; transition:.25s; flex-shrink:0; position:relative; }
+        .cw, .bcw { width:34px; height:34px; border-radius:50%; border:2px solid rgba(255,255,255,.12); cursor:pointer; transition:.25s; flex-shrink:0; position:relative; pointer-events:auto; }
         .cw:hover, .bcw:hover { transform:scale(1.1); }
         .cw.sel { border-color:#fff; transform:scale(1.15); box-shadow:0 0 14px rgba(255,255,255,.25); }
-        /* Input de color oculto dentro de cada well */
-        .cw input[type=color], .bcw input[type=color] { position:absolute; inset:0; opacity:0; width:100%; height:100%; cursor:pointer; border:none; padding:0; }
         .pal-btns { display:flex; gap:8px; margin-top:10px; }
-        .pal-btn { background:none; border:1px dashed rgba(255,255,255,.2); color:#fff; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:16px; line-height:26px; text-align:center; transition:.2s; }
+        .pal-btn { background:none; border:1px dashed rgba(255,255,255,.2); color:#fff; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:16px; line-height:26px; text-align:center; transition:.2s; pointer-events:auto; }
         .pal-btn:hover { background:rgba(255,255,255,.08); }
 
         /* BORDER CANVAS */
@@ -129,11 +127,11 @@
                     <div id="tog-mix" class="tog"></div>
                 </div>
                 <div class="pal-wrap" id="main-palette">
-                    <div class="cw sel" style="background:#6600ff"><input type="color" value="#6600ff"></div>
-                    <div class="cw"     style="background:#00b3ff"><input type="color" value="#00b3ff"></div>
-                    <div class="cw"     style="background:#ff8800"><input type="color" value="#ff8800"></div>
-                    <div class="cw"     style="background:#37ff00"><input type="color" value="#37ff00"></div>
-                    <div class="cw"     style="background:#82614f"><input type="color" value="#82614f"></div>
+                    <div class="cw sel" style="background:#6600ff"></div>
+                    <div class="cw"     style="background:#00b3ff"></div>
+                    <div class="cw"     style="background:#ff8800"></div>
+                    <div class="cw"     style="background:#37ff00"></div>
+                    <div class="cw"     style="background:#82614f"></div>
                 </div>
                 <div class="pal-btns">
                     <button class="pal-btn" id="add-main">+</button>
@@ -165,13 +163,17 @@
                     <div class="ctrl-info">Smoke Spread <span class="val" id="v-bspread">0.50</span></div>
                     <input type="range" id="p-bspread" min="0.05" max="1" step="0.05" value="0.50">
                 </div>
+                <div class="tog-row" style="margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.05);">
+                    <span class="tog-lbl">Adv. Bloom (Liquid Splash)</span>
+                    <div id="tog-bloom" class="tog"></div>
+                </div>
                 <span class="sec-label" style="margin-top:10px;">Box Palette — Dbl-click to edit</span>
                 <div class="pal-wrap" id="box-palette">
-                    <div class="bcw" style="background:#6600ff"><input type="color" value="#6600ff"></div>
-                    <div class="bcw" style="background:#00b3ff"><input type="color" value="#00b3ff"></div>
-                    <div class="bcw" style="background:#ff8800"><input type="color" value="#ff8800"></div>
-                    <div class="bcw" style="background:#37ff00"><input type="color" value="#37ff00"></div>
-                    <div class="bcw" style="background:#82614f"><input type="color" value="#82614f"></div>
+                    <div class="bcw" style="background:#6600ff"></div>
+                    <div class="bcw" style="background:#00b3ff"></div>
+                    <div class="bcw" style="background:#ff8800"></div>
+                    <div class="bcw" style="background:#37ff00"></div>
+                    <div class="bcw" style="background:#82614f"></div>
                 </div>
                 <div class="pal-btns">
                     <button class="pal-btn" id="add-box">+</button>
@@ -204,6 +206,16 @@
 
     <canvas id="border-fx"></canvas>
 
+    <!-- CUSTOM COLOR PICKER MODAL -->
+    <div id="cp-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(10,10,15,0.95); padding:20px; border-radius:16px; border:1px solid rgba(0,242,255,0.2); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); z-index:1000; box-shadow:0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(0,242,255,0.1); width:240px; pointer-events:auto;">
+        <div style="font-size:10px; letter-spacing:2px; color:var(--ac); margin-bottom:15px; text-transform:uppercase; text-align:center;">Select Hue/Sat</div>
+        <canvas id="cp-wheel" width="200" height="200" style="border-radius:50%; cursor:crosshair; display:block; margin:0 auto; box-shadow:0 0 10px rgba(0,0,0,0.5);"></canvas>
+        <div style="display:flex; justify-content:space-between; margin-top:20px;">
+            <button id="cp-cancel" style="background:transparent; border:1px solid rgba(255,255,255,0.1); color:#fff; padding:6px 16px; border-radius:8px; cursor:pointer; font-size:11px; transition:0.3s; pointer-events:auto;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">Cancel</button>
+            <button id="cp-apply" style="background:var(--ac); border:none; color:#000; font-weight:bold; padding:6px 16px; border-radius:8px; cursor:pointer; font-size:11px; box-shadow:0 0 10px var(--ac); transition:0.3s; pointer-events:auto;" onmouseover="this.style.boxShadow='0 0 20px var(--ac)'" onmouseout="this.style.boxShadow='0 0 10px var(--ac)'">Apply</button>
+        </div>
+    </div>
+
     <script type="module" src="/src/main.js"></script>
-</body>
+<script>window.addEventListener('click', e => console.log('CLICK ON:', e.target));</script></body>
 </html>

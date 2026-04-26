@@ -137,9 +137,20 @@ const displayFS = `
 precision highp float;
 varying vec2 vUv;
 uniform sampler2D uTex;
-uniform float uGlow, uContrast, uSat;
+uniform float uGlow, uContrast, uSat, uAdvBloom;
 void main(){
     vec3 c = texture2D(uTex, vUv).rgb * uGlow;
+    
+    // Evitar branches dinámicos (if) con texture2D para prevenir crashes de WebGL
+    vec2 d = vec2(0.003, 0.0);
+    float r = texture2D(uTex, vUv - d).r;
+    float b = texture2D(uTex, vUv + d).b;
+    float bloomOn = step(0.5, uAdvBloom);
+    
+    c.r = mix(c.r, mix(c.r, r * uGlow, 0.5), bloomOn);
+    c.b = mix(c.b, mix(c.b, b * uGlow, 0.5), bloomOn);
+    c = mix(c, c * c * 1.5, bloomOn);
+
     float g = dot(c, vec3(0.299, 0.587, 0.114));
     c = mix(vec3(g), c, uSat);
     c = (c - 0.5) * uContrast + 0.5;
@@ -166,6 +177,109 @@ function hexToColor(hex) {
     // Asegurar formato #RRGGBB sin alfa
     const clean = hex.slice(0, 7);
     return new THREE.Color(clean);
+}
+
+// ── COLOR PICKER CUSTOM ────────────────────────────────────────────────────────
+class ColorPicker {
+    constructor() {
+        this.modal = document.getElementById('cp-modal');
+        this.canvas = document.getElementById('cp-wheel');
+        this.ctx = this.canvas.getContext('2d');
+        this.width = this.canvas.width;
+        this.height = this.canvas.height;
+        this.radius = this.width / 2;
+        this.tWell = null;
+        this.tArr = null;
+        this.tIdx = null;
+        
+        this.drawWheel();
+        
+        this.canvas.addEventListener('click', e => this.pick(e));
+        let isDragging = false;
+        this.canvas.addEventListener('mousedown', () => isDragging = true);
+        window.addEventListener('mouseup', () => isDragging = false);
+        this.canvas.addEventListener('mousemove', e => { if(isDragging) this.pick(e); });
+        
+        document.getElementById('cp-cancel').onclick = () => this.close(false);
+        document.getElementById('cp-apply').onclick = () => this.close(true);
+    }
+    
+    drawWheel() {
+        const cx = this.width/2;
+        const cy = this.height/2;
+        for(let y=0; y<this.height; y++){
+            for(let x=0; x<this.width; x++){
+                const dx = x - cx;
+                const dy = y - cy;
+                const d = Math.sqrt(dx*dx + dy*dy);
+                if (d <= this.radius) {
+                    const angle = Math.atan2(dy, dx);
+                    const hue = (angle + Math.PI) / (Math.PI * 2) * 360;
+                    const sat = d / this.radius * 100;
+                    this.ctx.fillStyle = `hsl(${hue}, ${sat}%, 50%)`;
+                    this.ctx.fillRect(x, y, 1, 1);
+                }
+            }
+        }
+    }
+    
+    pick(e) {
+        const rect = this.canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const cx = this.width/2;
+        const cy = this.height/2;
+        const dx = x - cx;
+        const dy = y - cy;
+        const d = Math.sqrt(dx*dx + dy*dy);
+        
+        if (d <= this.radius && this.tWell) {
+            const angle = Math.atan2(dy, dx);
+            const hue = (angle + Math.PI) / (Math.PI * 2) * 360;
+            const sat = d / this.radius * 100;
+            
+            const rgb = this.hslToRgb(hue/360, sat/100, 0.5);
+            const hex = '#' + rgb.map(v => Math.round(v*255).toString(16).padStart(2,'0')).join('');
+            
+            this.tWell.style.background = hex;
+            if(this.tArr && this.tIdx !== null) {
+                this.tArr[this.tIdx] = hexToColor(hex);
+            }
+        }
+    }
+    
+    open(well, arr, idx) {
+        this.tWell = well;
+        this.tArr = arr;
+        this.tIdx = idx;
+        this.modal.style.display = 'block';
+    }
+    
+    close(apply) {
+        this.modal.style.display = 'none';
+        this.tWell = null;
+    }
+
+    hslToRgb(h, s, l){
+        let r, g, b;
+        if(s === 0){ r = g = b = l; }
+        else{
+            const hue2rgb = (p, q, t) => {
+                if(t < 0) t += 1;
+                if(t > 1) t -= 1;
+                if(t < 1/6) return p + (q - p) * 6 * t;
+                if(t < 1/2) return q;
+                if(t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                return p;
+            };
+            const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+            const p = 2 * l - q;
+            r = hue2rgb(p, q, h + 1/3);
+            g = hue2rgb(p, q, h);
+            b = hue2rgb(p, q, h - 1/3);
+        }
+        return [r, g, b];
+    }
 }
 
 // ── MOTOR ─────────────────────────────────────────────────────────────────────
@@ -255,7 +369,7 @@ class FluidEngine {
             uniforms: { uVel:{value:null}, uCurl:{value:null}, uTex:{value:tex}, uCurlScale:{value:cfg.CURL}, uDt:{value:0.016} }
         });
         this.mDisp = new THREE.ShaderMaterial({ vertexShader: baseVS, fragmentShader: displayFS,
-            uniforms: { uTex:{value:null}, uGlow:{value:cfg.GLOW}, uContrast:{value:cfg.CONTRAST}, uSat:{value:cfg.SAT} }
+            uniforms: { uTex:{value:null}, uGlow:{value:cfg.GLOW}, uContrast:{value:cfg.CONTRAST}, uSat:{value:cfg.SAT}, uAdvBloom:{value:0.0} }
         });
         this.mBlur = new THREE.ShaderMaterial({ vertexShader: baseVS, fragmentShader: blurFS,
             uniforms: { uTex:{value:null}, uTexSize:{value:tex}, uAmt:{value:0.0} }
@@ -296,6 +410,7 @@ class FluidEngine {
         this.tog('tog-bg',     v => { cfg.BG     = v; });
         this.tog('tog-jelly',  v => { cfg.JELLY  = v; });
         this.tog('tog-lazy',   v => { cfg.LAZY   = v; });
+        this.tog('tog-bloom',  v => { this.mDisp.uniforms.uAdvBloom.value = v ? 1.0 : 0.0; });
         this.tog('tog-border', v => {
             cfg.BORDER = v;
             document.getElementById('border-fx').style.display = v ? 'block' : 'none';
@@ -305,15 +420,22 @@ class FluidEngine {
         ['l','r','t','b'].forEach(d => {
             const btn = document.getElementById('btn-dir-' + d);
             if(btn) {
-                btn.onclick = () => {
-                    document.querySelectorAll('[id^="btn-dir-"]').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    cfg.BOX_DIR = d === 'l' ? 'left' : d === 'r' ? 'right' : d === 't' ? 'top' : 'bot';
+                btn.onclick = (e) => {
+                    console.log("Clic en boton:", d);
+                    try {
+                        document.querySelectorAll('[id^="btn-dir-"]').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        cfg.BOX_DIR = d === 'l' ? 'left' : d === 'r' ? 'right' : d === 't' ? 'top' : 'bot';
+                    } catch (err) {
+                        console.error("Error al pulsar boton de direccion:", err);
+                    }
                 };
             }
         });
 
-        // Paletas con input[type=color] nativo
+        // Paletas custom Color Picker
+        this.colorPicker = new ColorPicker();
+        
         this.initPalette('main-palette', cfg.mainColors, true);
         document.getElementById('add-main').onclick = () => this.addWell('main-palette', cfg.mainColors, true);
         document.getElementById('rem-main').onclick = () => this.remWell('main-palette', cfg.mainColors);
@@ -339,8 +461,13 @@ class FluidEngine {
         const el = document.getElementById(id);
         if (!el) return;
         el.addEventListener('click', () => {
-            el.classList.toggle('on');
-            cb(el.classList.contains('on'));
+            console.log("Toggle clic:", id);
+            try {
+                el.classList.toggle('on');
+                cb(el.classList.contains('on'));
+            } catch (err) {
+                console.error("Error en toggle", id, err);
+            }
         });
     }
 
@@ -350,21 +477,11 @@ class FluidEngine {
     }
 
     attachWell(well, i, arr, isMain) {
-        const input = well.querySelector('input[type=color]');
-        if (!input) return;
-
-        // Cuando cambia el color en el picker nativo
-        input.addEventListener('input', e => {
-            const hex = e.target.value; // siempre #RRGGBB
-            well.style.background = hex;
-            arr[i] = hexToColor(hex);
-        });
-
-        // Doble click → abre el color picker nativo
+        // Doble click → abre el color picker CUSTOM
         well.addEventListener('dblclick', e => {
             e.preventDefault();
             e.stopPropagation();
-            input.click();
+            this.colorPicker.open(well, arr, i);
         });
 
         // Click simple → solo para paleta principal: seleccionar color
@@ -384,10 +501,6 @@ class FluidEngine {
         const well = document.createElement('div');
         well.className = isMain ? 'cw' : 'bcw';
         well.style.background = hex;
-        const input = document.createElement('input');
-        input.type = 'color';
-        input.value = hex;
-        well.appendChild(input);
         wrap.appendChild(well);
         arr.push(hexToColor(hex));
         this.attachWell(well, arr.length - 1, arr, isMain);
