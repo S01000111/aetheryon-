@@ -375,15 +375,38 @@ class FluidEngine {
 
         // Eliminamos el listener duplicado de aquí, se gestiona en buildUI()
 
-        window.addEventListener('mousemove', e => {
-            const x = e.clientX / window.innerWidth;
-            const y = 1 - e.clientY / window.innerHeight;
+        // Soporte de captura global para que el fluido responda incluso sobre textos
+        // Soporte de interacción simplificado: escuchamos directamente en el canvas
+        // Así, cualquier elemento UI con pointer-events: auto bloqueará el fluido de forma nativa.
+        const canvas = this.renderer.domElement;
+        const handleInteraction = (x, y) => {
             this.targetMouse.set(x, y);
             if (this.mouse.x < 0) {
                 this.mouse.set(x, y);
                 this.prevMouse.set(x, y);
             }
+        };
+
+        canvas.addEventListener('mousemove', e => {
+            handleInteraction(e.clientX / window.innerWidth, 1 - e.clientY / window.innerHeight);
         });
+
+        canvas.addEventListener('touchstart', e => {
+            if (e.touches.length > 0) {
+                const touch = e.touches[0];
+                handleInteraction(touch.clientX / window.innerWidth, 1 - touch.clientY / window.innerHeight);
+            }
+        }, { passive: true });
+
+        canvas.addEventListener('touchmove', e => {
+            if (e.touches.length > 0) {
+                const touch = e.touches[0];
+                handleInteraction(touch.clientX / window.innerWidth, 1 - touch.clientY / window.innerHeight);
+            }
+        }, { passive: true });
+
+        canvas.addEventListener('touchend', () => this.targetMouse.set(-1, -1));
+        window.addEventListener('mouseup', () => this.targetMouse.set(-1, -1));
 
         window.addEventListener('resize', () => {
             this.renderer.setSize(window.innerWidth, window.innerHeight);

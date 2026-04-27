@@ -291,8 +291,11 @@ html, body {
     transform: translateY(55px);
     transition: opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1),
                 transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
-    pointer-events: auto;
+    pointer-events: none; /* Crucial para el efecto de fluido */
     will-change: opacity, transform;
+}
+.step-content > * {
+    pointer-events: auto; /* Reactiva interacción para botones y texto */
 }
 .step:not(.is-visible) .step-content {
     opacity: 0;
@@ -625,26 +628,36 @@ html, body {
     visibility: visible;
     pointer-events: auto;
 }
-.btn-cerrar {
-    position: fixed;
-    top: 36px; left: 40px;
-    background: rgba(157,78,221,0.1);
-    border: 1px solid rgba(157,78,221,0.2);
-    color: rgba(210,190,255,0.8);
-    padding: 9px 20px;
-    border-radius: 20px;
+.btn-cerrar-final {
+    display: block;
+    margin: 80px auto 40px; /* Centrado automático y aire inferior */
+    background: rgba(157, 78, 221, 0.08);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(157, 78, 221, 0.3);
+    color: #fff;
+    padding: 16px 50px;
+    border-radius: 40px;
     cursor: pointer;
-    font-size: 11px;
-    letter-spacing: 2.5px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 4px;
     text-transform: uppercase;
     font-family: 'Outfit', sans-serif;
-    transition: all 0.3s;
-    z-index: 510;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    text-align: center;
+    width: fit-content;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    position: relative;
+    left: 0;
+    transform: none;
 }
-.btn-cerrar:hover {
-    background: rgba(157,78,221,0.2);
-    color: #fff;
-    border-color: rgba(157,78,221,0.5);
+.btn-cerrar-final:hover {
+    background: rgba(157, 78, 221, 0.2);
+    border-color: var(--dot-color);
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 15px 30px rgba(157, 78, 221, 0.25), 0 0 15px rgba(0, 179, 255, 0.2);
+    letter-spacing: 6px; /* Efecto dinámico premium */
 }
 .overlay-inner {
     max-width: 800px;
@@ -652,6 +665,7 @@ html, body {
     margin: auto;
     animation: overlaySlide 0.5s cubic-bezier(0.22,1,0.36,1) both;
     padding-top: 40px;
+    padding-bottom: 200px;
 }
 .overlay-inner.wide { max-width: 1200px; }
 @keyframes overlaySlide {
@@ -763,6 +777,7 @@ html, body {
 .lore-title { font-size: 56px; font-weight: 700; color: #fff; line-height: 1; margin: 0 0 20px; letter-spacing: -1px; }
 .lore-meta { font-size: 12px; color: var(--dot-color); text-transform: uppercase; letter-spacing: 3px; display: block; margin-bottom: 40px; border-bottom: 1px solid rgba(157,78,221,0.2); padding-bottom: 20px; }
 .lore-body { font-family: 'Times New Roman', Times, serif; font-size: 20px; line-height: 1.8; color: rgba(230,220,255,0.85); columns: 2; column-gap: 60px; }
+@media (max-width: 900px) { .lore-body { columns: 1; text-align: left; } }
 .lore-body p { margin-top: 0; margin-bottom: 24px; text-align: justify; }
 
 /* Lore Alternativos */
@@ -948,6 +963,13 @@ html, body {
     .clase-symbol { font-size: 50px; }
     #panel { top: auto !important; bottom: 16px !important; right: 16px !important; }
     #dot-nav { right: 8px; transform: translateY(-50%) scale(0.85); }
+    .lore-dioses-grid { 
+        grid-template-columns: 1fr; 
+        gap: 24px; 
+        max-width: 500px;
+        margin: 40px auto 0;
+    }
+    .lore-dios-card { padding: 30px; text-align: center; }
 }
 @media (max-width: 480px) {
     .pruebas-grid { grid-template-columns: repeat(2, 1fr); }
@@ -970,9 +992,15 @@ html, body {
     pointer-events: auto;
 }
 #site-footer.step {
-    height: auto;
-    min-height: 60vh;
-    padding-top: 150px;
+    height: 100vh;
+    min-height: 100vh;
+    padding-top: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end; /* ALINEACIÓN A LA BASE VERTICAL */
+    align-items: center;      /* CENTRADO HORIZONTAL */
+    padding-bottom: 60px; /* Espacio desde el borde inferior */
+    background: linear-gradient(to top, #000 0%, #000 60%, transparent 100%);
 }
 .footer-inner {
     display: flex;

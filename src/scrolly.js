@@ -43,29 +43,40 @@ export function initScrolly() {
         setTimeout(() => { estaDesplazando = false; }, 550);
     }
 
-    // ─── Wheel (cualquier posición, excepto dentro del panel) ────────────────
     window.addEventListener('wheel', (e) => {
+        // Bloquear si hay un overlay abierto (el body ya está en position:fixed)
+        if (window.bloqueoScroll) return;
         // Si el evento ocurre dentro del panel de controles, lo dejamos pasar
-        if (e.target.closest('#panel')) return;
+        if (e.target.closest('#panel') || e.target.closest('#panel-vfx')) return;
         e.preventDefault();
         irASiguiente(e.deltaY > 0 ? 1 : -1);
     }, { passive: false });
 
     // ─── Teclado ──────────────────────────────────────────────────────────────
     window.addEventListener('keydown', (e) => {
+        if (window.bloqueoScroll) return;
         if (e.key === 'ArrowDown' || e.key === 'PageDown') irASiguiente(1);
         if (e.key === 'ArrowUp'   || e.key === 'PageUp')   irASiguiente(-1);
     });
 
     // ─── Touch ───────────────────────────────────────────────────────────────
     window.addEventListener('touchstart', (e) => {
+        if (window.bloqueoScroll) return;
         iniciadorTáctil = e.touches[0].clientY;
-    }, { passive: true });
+    }, { passive: false });
 
-    window.addEventListener('touchend', (e) => {
-        const delta = iniciadorTáctil - e.changedTouches[0].clientY;
-        if (Math.abs(delta) > 50) irASiguiente(delta > 0 ? 1 : -1);
-    }, { passive: true });
+    window.addEventListener('touchmove', (e) => {
+        if (window.bloqueoScroll) return;
+        // Si estamos scrolleando dentro de un panel u overlay con scroll propio, no interferimos
+        if (e.target.closest('.pb') || e.target.closest('.ui-overlay')) return;
+        
+        e.preventDefault();
+        const delta = iniciadorTáctil - e.touches[0].clientY;
+        if (Math.abs(delta) > 50) {
+            irASiguiente(delta > 0 ? 1 : -1);
+            iniciadorTáctil = e.touches[0].clientY; 
+        }
+    }, { passive: false });
 
     // ─── Evento global: links del menú pueden disparar navegación ────────────
     window.addEventListener('scrolly-goto', (e) => {

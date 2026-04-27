@@ -18,16 +18,19 @@
         #content h2 { font-size:88px; letter-spacing:-4px; margin:0; font-weight:700; line-height:.85; }
 
         #panel, #panel-vfx {
-            position:fixed; right:20px; width:var(--w);
+            position:fixed; width:var(--w);
             background:var(--bg); backdrop-filter:blur(60px); -webkit-backdrop-filter:blur(60px);
-            border:1px solid rgba(255,255,255,.07); border-radius:22px;
+            border:none; border-radius:22px;
             z-index:100; box-shadow:0 40px 90px rgba(0,0,0,.95);
             overflow:visible;
             max-height:92vh;
-            transition:max-height .5s cubic-bezier(.16,1,.3,1), width .45s cubic-bezier(.16,1,.3,1), border-radius .45s, top 0.5s ease, bottom 0.5s ease;
+            pointer-events: auto; /* Desbloqueado: Permitir interactividad con los paneles Elite y VFX */
+            transition:max-height .5s cubic-bezier(.16,1,.3,1), width .45s cubic-bezier(.16,1,.3,1), border-radius .45s, top 0.5s ease, right 0.5s ease, bottom 0.5s ease;
         }
-        #panel { top:20px; z-index:105; }
-        #panel-vfx { top:85px; border-color: rgba(157,78,221,0.15); z-index:100; }
+        .step-content { pointer-events: none; }
+        .step-content > * { pointer-events: auto; }
+        #panel { top:20px; right:80px; z-index:100; }
+        #panel-vfx { top:20px; right:20px; border-color: rgba(157,78,221,0.15); z-index:110; }
         
         #panel.collapsed, #panel-vfx.collapsed { width:50px; max-height:50px; overflow:hidden; border-radius:50%; }
         #panel.collapsed { box-shadow:0 0 25px rgba(0,242,255,0.3), inset 0 0 10px rgba(0,242,255,0.2); animation:pulseGlow 2s infinite alternate; }
@@ -40,15 +43,9 @@
         
         #panel.collapsed .ph, #panel-vfx.collapsed .ph { height:50px; padding:0; border:none; justify-content:center; }
         #panel.collapsed .ph h3, #panel.collapsed .ph-icon, #panel-vfx.collapsed .ph h3, #panel-vfx.collapsed .ph-icon { display:none; }
-        
         #panel.collapsed::after, #panel-vfx.collapsed::after { content:''; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:10px; height:10px; border-radius:50%; opacity:0.8; pointer-events:none; }
         #panel.collapsed::after { background:var(--ac); }
         #panel-vfx.collapsed::after { background:#9d4edd; }
-        .ph h3 { margin:0; font-size:10px; letter-spacing:4px; text-transform:uppercase; color:var(--ac); }
-        .ph-icon { font-size:14px; opacity:.3; transition:.4s; }
-        #panel.collapsed .ph { height:50px; padding:0; border:none; justify-content:center; }
-        #panel.collapsed .ph h3, #panel.collapsed .ph-icon { display:none; }
-        #panel.collapsed::after { content:''; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:10px; height:10px; border-radius:50%; background:var(--ac); opacity:0.8; pointer-events:none; }
         .pb { padding:8px 22px 24px; overflow-y:auto; overflow-x:visible; scrollbar-width:none; max-height:calc(92vh - 56px); }
         .pb::-webkit-scrollbar { display:none; }
         #panel.collapsed .pb { display:none; }
@@ -117,12 +114,17 @@
         .tcw.active { border-color: #fff; box-shadow: 0 0 10px #fff; }
 
         /* HUD: color puntos */
-        #border-fx { position:fixed; inset:0; z-index:2; pointer-events:none; display:none; }
+        @media (max-width: 768px) {
+            .ui-overlay { padding: 40px 20px !important; box-sizing: border-box !important; }
+            .ui-overlay .overlay-inner { width: calc(100% - 40px) !important; margin: 0 auto !important; height: auto !important; max-height: 80vh !important; border-radius: 25px !important; }
+            .btn-cerrar-final { margin: 40px auto 0 !important; position: relative !important; left: auto !important; transform: none !important; }
+        }
     </style>
 </head>
 <body>
     <div id="app"></div>
 
+    <div id="top-blur-banner" style="position:fixed; top:0; left:0; width:100%; height:80px; background:rgba(3,1,10,0.4); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-bottom:1px solid rgba(255,255,255,0.05); z-index:85; pointer-events:none;"></div>
     <!-- NAVEGACIÓN SUPERIOR -->
     <nav id="top-nav">
         <div class="nav-left">
@@ -131,39 +133,39 @@
             </a>
             <div class="nav-links">
                 <div class="nav-item">
-                    <a href="#">Mundo <span class="nav-arrow">▾</span></a>
+                    <a href="javascript:void(0)">Mundo <span class="nav-arrow">▾</span></a>
                     <div class="dropdown">
-                        <a href="#" onclick="scrollyIr(1);return false;"><span class="dd-icon">🗺</span>Mapa Estelar</a>
-                        <a href="#" onclick="scrollyIr(1);return false;"><span class="dd-icon">⚡</span>El Ciclo Sin Fin</a>
-                        <a href="#" onclick="scrollyIr(2);return false;"><span class="dd-icon">⭐</span>Las XII Pruebas</a>
-                        <a href="#" onclick="scrollyIr(4);return false;"><span class="dd-icon">🏛</span>El Olimpo</a>
+                        <a href="javascript:void(0)" onclick="scrollyIr(1);return false;"><span class="dd-icon">🗺</span>Mapa Estelar</a>
+                        <a href="javascript:void(0)" onclick="scrollyIr(1);return false;"><span class="dd-icon">⚡</span>El Ciclo Sin Fin</a>
+                        <a href="javascript:void(0)" onclick="scrollyIr(2);return false;"><span class="dd-icon">⭐</span>Las XII Pruebas</a>
+                        <a href="javascript:void(0)" onclick="scrollyIr(4);return false;"><span class="dd-icon">🏛</span>El Olimpo</a>
                     </div>
                 </div>
                 <div class="nav-item">
-                    <a href="#">Clases <span class="nav-arrow">▾</span></a>
+                    <a href="javascript:void(0)">Clases <span class="nav-arrow">▾</span></a>
                     <div class="dropdown">
-                        <a href="#" onclick="abrirOverlay('clase-guerrero');return false;"><span class="dd-icon">⚔️</span>Guerrero</a>
-                        <a href="#" onclick="abrirOverlay('clase-mago');return false;"><span class="dd-icon">🔮</span>Mago</a>
-                        <a href="#" onclick="abrirOverlay('clase-arquera');return false;"><span class="dd-icon">🏹</span>Arquera</a>
-                        <a href="#" onclick="abrirOverlay('clase-picaro');return false;"><span class="dd-icon">🗡️</span>Pícaro</a>
+                        <a href="javascript:void(0)" onclick="abrirOverlay('clase-guerrero');return false;"><span class="dd-icon">⚔️</span>Guerrero</a>
+                        <a href="javascript:void(0)" onclick="abrirOverlay('clase-mago');return false;"><span class="dd-icon">🔮</span>Mago</a>
+                        <a href="javascript:void(0)" onclick="abrirOverlay('clase-arquera');return false;"><span class="dd-icon">🏹</span>Arquera</a>
+                        <a href="javascript:void(0)" onclick="abrirOverlay('clase-picaro');return false;"><span class="dd-icon">🗡️</span>Pícaro</a>
                     </div>
                 </div>
                 <div class="nav-item">
-                    <a href="#">Lore <span class="nav-arrow">▾</span></a>
+                    <a href="javascript:void(0)">Lore <span class="nav-arrow">▾</span></a>
                     <div class="dropdown">
-                        <a href="#" onclick="abrirOverlay('lore-viaje');return false;"><span class="dd-icon">📖</span>El Viaje del Héroe</a>
-                        <a href="#" onclick="abrirOverlay('lore-arcanos');return false;"><span class="dd-icon">🔱</span>Los Arcanos</a>
-                        <a href="#" onclick="abrirOverlay('lore-dioses');return false;"><span class="dd-icon">⚡</span>Dioses &amp; Titanes</a>
-                        <a href="#" onclick="abrirOverlay('lore-profecia');return false;"><span class="dd-icon">🌟</span>La Profecía</a>
+                        <a href="javascript:void(0)" onclick="abrirOverlay('lore-viaje');return false;"><span class="dd-icon">📖</span>El Viaje del Héroe</a>
+                        <a href="javascript:void(0)" onclick="abrirOverlay('lore-arcanos');return false;"><span class="dd-icon">🔱</span>Los Arcanos</a>
+                        <a href="javascript:void(0)" onclick="abrirOverlay('lore-dioses');return false;"><span class="dd-icon">⚡</span>Dioses &amp; Titanes</a>
+                        <a href="javascript:void(0)" onclick="abrirOverlay('lore-profecia');return false;"><span class="dd-icon">🌟</span>La Profecía</a>
                     </div>
                 </div>
                 <div class="nav-item">
-                    <a href="#">Galería <span class="nav-arrow">▾</span></a>
+                    <a href="javascript:void(0)">Galería <span class="nav-arrow">▾</span></a>
                     <div class="dropdown">
-                        <a href="#" onclick="abrirOverlay('gal-ilus');return false;"><span class="dd-icon">🎨</span>Ilustraciones</a>
-                        <a href="#" onclick="abrirOverlay('gal-cine');return false;"><span class="dd-icon">🎬</span>Cinemáticas</a>
-                        <a href="#" onclick="abrirOverlay('gal-arte');return false;"><span class="dd-icon">✏️</span>Arte Conceptual</a>
-                        <a href="#" onclick="abrirOverlay('gal-capturas');return false;"><span class="dd-icon">📸</span>Capturas en Juego</a>
+                        <a href="javascript:void(0)" onclick="abrirOverlay('gal-ilus');return false;"><span class="dd-icon">🎨</span>Ilustraciones</a>
+                        <a href="javascript:void(0)" onclick="abrirOverlay('gal-cine');return false;"><span class="dd-icon">🎬</span>Cinemáticas</a>
+                        <a href="javascript:void(0)" onclick="abrirOverlay('gal-arte');return false;"><span class="dd-icon">✏️</span>Arte Conceptual</a>
+                        <a href="javascript:void(0)" onclick="abrirOverlay('gal-capturas');return false;"><span class="dd-icon">📸</span>Capturas en Juego</a>
                     </div>
                 </div>
             </div>
@@ -534,7 +536,7 @@
         </div>
     </div>
 
-    <canvas id="border-fx"></canvas>
+    <canvas id="border-fx" style="position:fixed; inset:0; z-index:95; pointer-events:none;"></canvas>
 
     <!-- CUSTOM COLOR PICKER MODAL -->
     <div id="cp-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(10,10,15,0.95); padding:20px; border-radius:16px; border:1px solid rgba(0,242,255,0.2); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); z-index:1000; box-shadow:0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(0,242,255,0.1); width:240px; pointer-events:auto;">
@@ -547,42 +549,60 @@
     </div>
 
     <!-- OVERLAYS GLOBALES (Clases, Lore, Galería) -->
+
     <div class="ui-overlay" id="clase-guerrero">
-        <button class="btn-cerrar" onclick="cerrarOverlays()">&#8592; VOLVER</button>
         <div class="overlay-nav-top"><button class="nav-arrow-overlay" onclick="navOverlay('clase', -1)">◄</button><span class="overlay-nav-title">CLASES / GUERRERO</span><button class="nav-arrow-overlay" onclick="navOverlay('clase', 1)">►</button></div>
         <div class="overlay-inner">
-            <div class="clase-header"><span class="clase-symbol">&#9800;</span><div><span class="clase-signo-text">ARIES &middot; LEO &middot; TAURO</span><h2 class="clase-nombre">GUERRERO</h2></div></div>
-            <p class="clase-prueba">Primera Prueba: El León de Nemea</p>
-            <p class="clase-lore">Forjado en el fuego de la primera batalla, el Guerrero encarna la fuerza bruta del zodíaco. Ningún monstruo puede detener su avance. Cada ciclo lo afila contra las estrellas.</p>
-            <div class="clase-stats">
-                <div class="stat-row"><span class="stat-name">Fuerza</span><div class="stat-bar-bg"><div class="stat-bar-fill" style="width:92%"></div></div><span class="stat-val">92</span></div>
-                <div class="stat-row"><span class="stat-name">Magia</span><div class="stat-bar-bg"><div class="stat-bar-fill" style="width:25%"></div></div><span class="stat-val">25</span></div>
-                <div class="stat-row"><span class="stat-name">Agilidad</span><div class="stat-bar-bg"><div class="stat-bar-fill" style="width:60%"></div></div><span class="stat-val">60</span></div>
-                <div class="stat-row"><span class="stat-name">Sigilo</span><div class="stat-bar-bg"><div class="stat-bar-fill" style="width:20%"></div></div><span class="stat-val">20</span></div>
+            <div class="clase-header">
+                <span class="clase-symbol" style="color:#e63946">♈</span>
+                <div>
+                    <span class="clase-signo-text">SIGNO PRINCIPAL: ARIES</span>
+                    <h2 class="clase-nombre">GUERRERO</h2>
+                </div>
             </div>
-            <span class="clase-hab-title">HABILIDADES ÚNICAS</span>
-            <div class="clase-hab-list"><div class="clase-hab">Furia Olímpica</div><div class="clase-hab">Piel de Nemea</div><div class="clase-hab">Golpe Sísmico</div></div>
+            <p class="clase-prueba">Primera Prueba: El León de Nemea</p>
+            <p class="clase-lore">Nacido bajo la constelación de Aries, el guerrero no conoce la retirada. Su fuerza no proviene del acero, sino de la voluntad inquebrantable forjada en los incendios del Olimpo.</p>
+            <div class="clase-stats">
+                <div class="stat-row"><span class="stat-name">Ataque</span><div class="stat-bar-bg"><div class="stat-bar-fill" style="width:95%"></div></div><span class="stat-val">95</span></div>
+                <div class="stat-row"><span class="stat-name">Defensa</span><div class="stat-bar-bg"><div class="stat-bar-fill" style="width:80%"></div></div><span class="stat-val">80</span></div>
+                <div class="stat-row"><span class="stat-name">Velocidad</span><div class="stat-bar-bg"><div class="stat-bar-fill" style="width:40%"></div></div><span class="stat-val">40</span></div>
+            </div>
+            <span class="clase-hab-title">Habilidades Destacadas</span>
+            <div class="clase-hab-list">
+                <span class="clase-hab">Embestida Solar</span>
+                <span class="clase-hab">Rugido del León</span>
+                <span class="clase-hab">Furia de Aries</span>
+            </div>
+            <button class="btn-cerrar-final" onclick="cerrarOverlays()">VOLVER</button>
         </div>
     </div>
     <div class="ui-overlay" id="clase-mago">
-        <button class="btn-cerrar" onclick="cerrarOverlays()">&#8592; VOLVER</button>
         <div class="overlay-nav-top"><button class="nav-arrow-overlay" onclick="navOverlay('clase', -1)">◄</button><span class="overlay-nav-title">CLASES / MAGO</span><button class="nav-arrow-overlay" onclick="navOverlay('clase', 1)">►</button></div>
         <div class="overlay-inner">
-            <div class="clase-header"><span class="clase-symbol">&#9810;</span><div><span class="clase-signo-text">ACUARIO &middot; ESCORPIO &middot; PISCIS</span><h2 class="clase-nombre">MAGO</h2></div></div>
-            <p class="clase-prueba">Segunda Prueba: La Hidra de Lerna</p>
-            <p class="clase-lore">Donde otros ven caos, el Mago ve patrones escritos en las estrellas. Su poder arcano nace de los secretos que los dioses ocultaron en las constelaciones.</p>
-            <div class="clase-stats">
-                <div class="stat-row"><span class="stat-name">Fuerza</span><div class="stat-bar-bg"><div class="stat-bar-fill" style="width:30%"></div></div><span class="stat-val">30</span></div>
-                <div class="stat-row"><span class="stat-name">Magia</span><div class="stat-bar-bg"><div class="stat-bar-fill" style="width:97%"></div></div><span class="stat-val">97</span></div>
-                <div class="stat-row"><span class="stat-name">Agilidad</span><div class="stat-bar-bg"><div class="stat-bar-fill" style="width:45%"></div></div><span class="stat-val">45</span></div>
-                <div class="stat-row"><span class="stat-name">Sigilo</span><div class="stat-bar-bg"><div class="stat-bar-fill" style="width:55%"></div></div><span class="stat-val">55</span></div>
+            <div class="clase-header">
+                <span class="clase-symbol" style="color:#4361ee">♒</span>
+                <div>
+                    <span class="clase-signo-text">SIGNO PRINCIPAL: ACUARIO</span>
+                    <h2 class="clase-nombre">MAGO</h2>
+                </div>
             </div>
-            <span class="clase-hab-title">HABILIDADES ÚNICAS</span>
-            <div class="clase-hab-list"><div class="clase-hab">Vínculo Estelar</div><div class="clase-hab">Tormenta Arcana</div><div class="clase-hab">Espejo de Destino</div></div>
+            <p class="clase-prueba">Segunda Prueba: La Hidra de Lerna</p>
+            <p class="clase-lore">El mago canaliza las energías de Acuario para manipular la realidad. Donde otros ven límites, él ve hilos de poder esperando ser tejidos en hechizos devastadores.</p>
+            <div class="clase-stats">
+                <div class="stat-row"><span class="stat-name">Ataque</span><div class="stat-bar-bg"><div class="stat-bar-fill" style="width:45%"></div></div><span class="stat-val">45</span></div>
+                <div class="stat-row"><span class="stat-name">Defensa</span><div class="stat-bar-bg"><div class="stat-bar-fill" style="width:50%"></div></div><span class="stat-val">50</span></div>
+                <div class="stat-row"><span class="stat-name">Inteligencia</span><div class="stat-bar-bg"><div class="stat-bar-fill" style="width:100%"></div></div><span class="stat-val">100</span></div>
+            </div>
+            <span class="clase-hab-title">Habilidades Destacadas</span>
+            <div class="clase-hab-list">
+                <span class="clase-hab">Tormenta de Éter</span>
+                <span class="clase-hab">Muro Dimensional</span>
+                <span class="clase-hab">Singularidad Arcana</span>
+            </div>
+            <button class="btn-cerrar-final" onclick="cerrarOverlays()">VOLVER</button>
         </div>
     </div>
     <div class="ui-overlay" id="clase-arquera">
-        <button class="btn-cerrar" onclick="cerrarOverlays()">&#8592; VOLVER</button>
         <div class="overlay-nav-top"><button class="nav-arrow-overlay" onclick="navOverlay('clase', -1)">◄</button><span class="overlay-nav-title">CLASES / ARQUERA</span><button class="nav-arrow-overlay" onclick="navOverlay('clase', 1)">►</button></div>
         <div class="overlay-inner">
             <div class="clase-header"><span class="clase-symbol">&#9808;</span><div><span class="clase-signo-text">SAGITARIO &middot; VIRGO &middot; LIBRA</span><h2 class="clase-nombre">ARQUERA</h2></div></div>
@@ -596,10 +616,10 @@
             </div>
             <span class="clase-hab-title">HABILIDADES ÚNICAS</span>
             <div class="clase-hab-list"><div class="clase-hab">Flecha del Oráculo</div><div class="clase-hab">Paso Celestial</div><div class="clase-hab">Lluvia de Estrellas</div></div>
+            <button class="btn-cerrar-final" onclick="cerrarOverlays()">VOLVER</button>
         </div>
     </div>
     <div class="ui-overlay" id="clase-picaro">
-        <button class="btn-cerrar" onclick="cerrarOverlays()">&#8592; VOLVER</button>
         <div class="overlay-nav-top"><button class="nav-arrow-overlay" onclick="navOverlay('clase', -1)">◄</button><span class="overlay-nav-title">CLASES / PÍCARO</span><button class="nav-arrow-overlay" onclick="navOverlay('clase', 1)">►</button></div>
         <div class="overlay-inner">
             <div class="clase-header"><span class="clase-symbol">&#9802;</span><div><span class="clase-signo-text">GÉMINIS &middot; LIBRA &middot; ESCORPIO</span><h2 class="clase-nombre">PÍCARO</h2></div></div>
@@ -613,12 +633,12 @@
             </div>
             <span class="clase-hab-title">HABILIDADES ÚNICAS</span>
             <div class="clase-hab-list"><div class="clase-hab">Danza de Sombras</div><div class="clase-hab">Robo de Destino</div><div class="clase-hab">Dualidad Geminiana</div></div>
+            <button class="btn-cerrar-final" onclick="cerrarOverlays()">VOLVER</button>
         </div>
     </div>
 
     <!-- LORE OVERLAYS -->
     <div class="ui-overlay" id="lore-viaje">
-        <button class="btn-cerrar" onclick="cerrarOverlays()">&#8592; VOLVER</button>
         <div class="overlay-nav-top"><button class="nav-arrow-overlay" onclick="navOverlay('lore', -1)">◄</button><span class="overlay-nav-title">LORE / VIAJE DEL HÉROE</span><button class="nav-arrow-overlay" onclick="navOverlay('lore', 1)">►</button></div>
         <div class="overlay-inner">
             <h2 class="lore-title">El Viaje del Héroe</h2>
@@ -627,10 +647,10 @@
                 <p>Las estrellas no nacen en el vacío, nacen del colapso. Cuando los antiguos dioses abandonaron el Olimpo, dejaron fragmentos de su esencia dispersos entre las constelaciones. Tu viaje comienza aquí, no como un mortal, sino como un recipiente de polvo estelar.</p>
                 <p>Cada caída en batalla no es el final, es una refracción. El ciclo exige que mueras para comprender la verdadera naturaleza del laberinto. Sólo enfrentando las Doce Pruebas podrás forjar la llave cósmica que abre las puertas de Aetheryon.</p>
             </div>
+            <button class="btn-cerrar-final" onclick="cerrarOverlays()">VOLVER</button>
         </div>
     </div>
     <div class="ui-overlay" id="lore-arcanos">
-        <button class="btn-cerrar" onclick="cerrarOverlays()">&#8592; VOLVER</button>
         <div class="overlay-nav-top"><button class="nav-arrow-overlay" onclick="navOverlay('lore', -1)">◄</button><span class="overlay-nav-title">LORE / LOS ARCANOS</span><button class="nav-arrow-overlay" onclick="navOverlay('lore', 1)">►</button></div>
         <div class="overlay-inner lore-arcanos-layout">
             <span class="clase-symbol" style="font-size: 80px; display: block; margin-bottom: 20px;">&#9734;</span>
@@ -642,10 +662,10 @@
             <p style="font-family: 'Times New Roman', serif; font-size: 20px; color: rgba(230,220,255,0.85); line-height: 1.8;">
                 Los Arcanos son fragmentos petrificados del primer Big Bang. A través del juego, podrás recolectarlos y equiparlos en tu manto zodiacal. Existen Arcanos mayores, que alteran la realidad misma de la simulación, y Arcanos menores, que te otorgan pequeñas ventajas en la batalla contra las Sombras.
             </p>
+            <button class="btn-cerrar-final" onclick="cerrarOverlays()">VOLVER</button>
         </div>
     </div>
     <div class="ui-overlay" id="lore-dioses">
-        <button class="btn-cerrar" onclick="cerrarOverlays()">&#8592; VOLVER</button>
         <div class="overlay-nav-top"><button class="nav-arrow-overlay" onclick="navOverlay('lore', -1)">◄</button><span class="overlay-nav-title">LORE / DIOSES & TITANES</span><button class="nav-arrow-overlay" onclick="navOverlay('lore', 1)">►</button></div>
         <div class="overlay-inner wide">
             <div class="galeria-header">
@@ -670,20 +690,20 @@
                     <p style="color: rgba(255,255,255,0.6); line-height: 1.6;">Las almas no mueren, se archivan. Él custodia el códice de todas las partidas fallidas.</p>
                 </div>
             </div>
+            <button class="btn-cerrar-final" onclick="cerrarOverlays()">VOLVER</button>
         </div>
     </div>
     <div class="ui-overlay" id="lore-profecia">
-        <button class="btn-cerrar" onclick="cerrarOverlays()">&#8592; VOLVER</button>
         <div class="overlay-nav-top"><button class="nav-arrow-overlay" onclick="navOverlay('lore', -1)">◄</button><span class="overlay-nav-title">LORE / LA PROFECÍA</span><button class="nav-arrow-overlay" onclick="navOverlay('lore', 1)">►</button></div>
         <div class="overlay-inner wide lore-profecia-hero">
             <h2>El XIII Signo</h2>
             <p>Doce casas encierran el laberinto, pero sólo el decimotercer signo, el Ophiuchus, puede quebrar el ciclo. No naciste bajo las estrellas, tú eres la estrella que las devorará.</p>
+            <button class="btn-cerrar-final" onclick="cerrarOverlays()">VOLVER</button>
         </div>
     </div>
 
     <!-- GALERÍA OVERLAYS -->
     <div class="ui-overlay" id="gal-ilus">
-        <button class="btn-cerrar" onclick="cerrarOverlays()">&#8592; VOLVER</button>
         <div class="overlay-nav-top"><button class="nav-arrow-overlay" onclick="navOverlay('galeria', -1)">◄</button><span class="overlay-nav-title">GALERÍA / ILUSTRACIONES</span><button class="nav-arrow-overlay" onclick="navOverlay('galeria', 1)">►</button></div>
         <div class="overlay-inner wide">
             <div class="galeria-header">
@@ -698,10 +718,10 @@
                 <div class="gal-item"><span class="gal-placeholder">&#128444;</span><div class="gal-caption">El Oráculo Ciego</div></div>
                 <div class="gal-item"><span class="gal-placeholder">&#128444;</span><div class="gal-caption">Ascensión</div></div>
             </div>
+            <button class="btn-cerrar-final" onclick="cerrarOverlays()">VOLVER</button>
         </div>
     </div>
     <div class="ui-overlay" id="gal-cine">
-        <button class="btn-cerrar" onclick="cerrarOverlays()">&#8592; VOLVER</button>
         <div class="overlay-nav-top"><button class="nav-arrow-overlay" onclick="navOverlay('galeria', -1)">◄</button><span class="overlay-nav-title">GALERÍA / CINEMÁTICAS</span><button class="nav-arrow-overlay" onclick="navOverlay('galeria', 1)">►</button></div>
         <div class="overlay-inner wide">
             <div class="gal-cine-layout">
@@ -716,10 +736,10 @@
                     <div class="gal-item"><span class="gal-placeholder">▶</span><div class="gal-caption">Detrás de Escena</div></div>
                 </div>
             </div>
+            <button class="btn-cerrar-final" onclick="cerrarOverlays()">VOLVER</button>
         </div>
     </div>
     <div class="ui-overlay" id="gal-arte">
-        <button class="btn-cerrar" onclick="cerrarOverlays()">&#8592; VOLVER</button>
         <div class="overlay-nav-top"><button class="nav-arrow-overlay" onclick="navOverlay('galeria', -1)">◄</button><span class="overlay-nav-title">GALERÍA / ARTE CONCEPTUAL</span><button class="nav-arrow-overlay" onclick="navOverlay('galeria', 1)">►</button></div>
         <div class="overlay-inner wide">
             <div class="gal-arte-waterfall">
@@ -730,10 +750,11 @@
                 <div class="gal-item" style="aspect-ratio: auto; height: 350px;"><span class="gal-placeholder">&#128396;</span></div>
                 <div class="gal-item" style="aspect-ratio: auto; height: 280px;"><span class="gal-placeholder">&#128396;</span></div>
             </div>
+            <button class="btn-cerrar-final" onclick="cerrarOverlays()">VOLVER</button>
         </div>
     </div>
     <div class="ui-overlay" id="gal-capturas">
-        <button class="btn-cerrar" onclick="cerrarOverlays()">&#8592; VOLVER</button>
+
         <div class="overlay-nav-top"><button class="nav-arrow-overlay" onclick="navOverlay('galeria', -1)">◄</button><span class="overlay-nav-title">GALERÍA / CAPTURAS EN JUEGO</span><button class="nav-arrow-overlay" onclick="navOverlay('galeria', 1)">►</button></div>
         <div class="overlay-inner wide" style="padding-top: 100px;">
             <div class="gal-capturas-slider">
@@ -743,6 +764,7 @@
                 <div class="gal-item"><span class="gal-placeholder">&#128247;</span><div class="gal-caption">Efecto de Habilidad Arcana</div></div>
                 <div class="gal-item"><span class="gal-placeholder">&#128247;</span><div class="gal-caption">Pantalla de Derrota</div></div>
             </div>
+            <button class="btn-cerrar-final" onclick="cerrarOverlays()">VOLVER</button>
         </div>
     </div>
 
@@ -764,14 +786,34 @@
         initScrolly();
     </script>
     <script>
+        window.bloqueoScroll = false;
+        let lastScrollY = 0;
+
         function abrirOverlay(id) {
             document.querySelectorAll('.ui-overlay').forEach(el => el.classList.remove('activa'));
             const el = document.getElementById(id);
-            if (el) { el.classList.add('activa'); document.body.style.overflow = 'hidden'; }
+            if (el) { 
+                lastScrollY = window.scrollY;
+                el.classList.add('activa'); 
+                document.documentElement.style.overflow = 'hidden'; 
+                document.body.style.overflow = 'hidden'; 
+                document.body.style.position = 'fixed';
+                document.body.style.top = `-${lastScrollY}px`;
+                document.body.style.width = '100%';
+                document.body.style.touchAction = 'none';
+                window.bloqueoScroll = true;
+            }
         }
         function cerrarOverlays() {
             document.querySelectorAll('.ui-overlay').forEach(el => el.classList.remove('activa'));
+            document.documentElement.style.overflow = '';
             document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.width = '';
+            document.body.style.touchAction = '';
+            window.scrollTo(0, lastScrollY);
+            window.bloqueoScroll = false;
         }
 
         const overlayGroups = {
@@ -874,12 +916,10 @@
         });
     </script>
     <style>
-        .ctrl-panel.collapsed { width:50px !important; max-height:50px !important; overflow:hidden !important; border-radius:50% !important; }
-        .ctrl-panel.collapsed .ph h3, .ctrl-panel.collapsed .ph-icon { display:none !important; }
+        #panel.collapsed, #panel-vfx.collapsed { width:50px !important; max-height:50px !important; overflow:hidden !important; border-radius:50% !important; }
+        #panel.collapsed .ph h3, #panel.collapsed .ph-icon, #panel-vfx.collapsed .ph h3, #panel-vfx.collapsed .ph-icon { display:none !important; }
         
         #panel-vfx.collapsed { box-shadow:0 0 25px rgba(157,78,221,0.3), inset 0 0 10px rgba(157,78,221,0.2); animation:pulseGlowVfx 2s infinite alternate; }
-        @keyframes pulseGlowVfx { 0% { box-shadow:0 0 15px rgba(157,78,221,0.2), inset 0 0 5px rgba(157,78,221,0.1); } 100% { box-shadow:0 0 35px rgba(157,78,221,0.5), inset 0 0 20px rgba(157,78,221,0.3); } }
-        #panel-vfx.collapsed::after { content:''; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:10px; height:10px; border-radius:50%; background:#9d4edd; opacity:0.8; }
         .tog.on.vfx { background:#9d4edd; box-shadow: 0 0 10px #9d4edd; }
         @media (max-width: 768px) {
             #panel { top: auto !important; bottom: 20px !important; right: 80px !important; width: 50px !important; z-index: 110 !important; left: auto !important; }
@@ -888,7 +928,7 @@
             #panel-vfx { top: auto !important; bottom: 20px !important; right: 20px !important; width: 50px !important; z-index: 109 !important; left: auto !important; }
             #panel-vfx:not(.collapsed) { width: calc(100% - 100px) !important; bottom: 85px !important; right: 10px !important; }
 
-            .btn-cerrar { bottom: 20px !important; top: auto !important; left: 50% !important; transform: translateX(-50%) !important; width: auto !important; text-align: center; white-space: nowrap; padding: 12px 30px !important; box-shadow: 0 10px 30px rgba(0,0,0,0.8) !important; }
+            .btn-cerrar-final { margin: 40px auto 20px !important; position: relative !important; left: auto !important; transform: none !important; width: fit-content !important; display: block !important; }
         }
     </style>
     <script>
@@ -896,14 +936,21 @@
             const p = document.getElementById('panel');
             const vfx = document.getElementById('panel-vfx');
             if (p && vfx) {
-                const isCollapsed = p.classList.contains('collapsed');
-                // En responsive no aplicamos cascada vertical de escritorio
                 if (window.innerWidth > 768) {
-                    vfx.style.top = isCollapsed ? '85px' : (p.offsetHeight + 40) + 'px';
+                    // Disposición Horizontal Fija: Elite al lado del VFX
+                    vfx.style.top = '20px';
+                    vfx.style.right = '20px';
+                    p.style.top = '20px';
+                    p.style.right = '80px'; 
                     vfx.style.bottom = 'auto';
                 } else {
+                    // Responsive: Círculos en la base
                     vfx.style.top = 'auto';
                     vfx.style.bottom = '20px';
+                    vfx.style.right = '20px';
+                    p.style.top = 'auto';
+                    p.style.bottom = '20px';
+                    p.style.right = '80px';
                 }
             }
         }
@@ -940,9 +987,16 @@
                 }
             }, 100);
         }, { passive: true });
-        // Inyectar altura para scrollbar
-        document.body.style.height = '600vh';
+        // Cálculo dinámico infalible: Altura = (Secciones * 100vh)
+        // Cálculo dinámico de precisión: Altura = (Secciones * Altura Real Viewport)
+        function ajustarAltura() {
+            const totalSteps = document.querySelectorAll('.step').length;
+            document.body.style.height = (totalSteps * window.innerHeight) + 'px';
+        }
+        window.addEventListener('resize', ajustarAltura);
+        ajustarAltura();
         document.body.style.overflowY = 'auto';
+        document.body.style.overflowX = 'hidden';
 
         // Asegurar visibilidad inicial inmediata
         const arranque = () => {
