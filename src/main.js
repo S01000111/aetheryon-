@@ -27,6 +27,24 @@ const cfg = {
         new THREE.Color(0x37ff00),
         new THREE.Color(0x82614f),
     ],
+    TOR_ENABLE: true,
+    TOR_HORIZ: true,
+    TOR_TURB: 0,
+    TOR_VEL: 5000,
+    TOR_PERS: 0.02,
+    TOR_GLOW: 5,
+    TOR_INFLOW: 3.2,
+    TOR_RADVEL: 0,
+    TOR_RADSPR: 0.06,
+    TOR_CONT: 0.01,
+    torColors: [
+        new THREE.Color(0x6600ff),
+        new THREE.Color(0x00b3ff),
+        new THREE.Color(0xff8800),
+        new THREE.Color(0x37ff00),
+        new THREE.Color(0x82614f),
+        new THREE.Color(0xff0000), // Rojo Intenso para el Footer
+    ]
 };
 
 // ── SHADERS ───────────────────────────────────────────────────────────────────
@@ -355,6 +373,10 @@ class FluidEngine {
         this.queue       = [];
         this.t           = 0;
 
+        window.addEventListener('section-change', (e) => {
+            this.triggerSectionSplash(e.detail.index);
+        });
+
         window.addEventListener('mousemove', e => {
             const x = e.clientX / window.innerWidth;
             const y = 1 - e.clientY / window.innerHeight;
@@ -456,13 +478,24 @@ class FluidEngine {
         this.sl('p-bspeed',   v => { cfg.BOX_SPEED = v; });
         this.sl('p-bspread',  v => { cfg.BOX_SPREAD= v; });
 
+        this.sl('p-torturb',  v => { cfg.TOR_TURB = v; });
+        this.sl('p-torvel',   v => { cfg.TOR_VEL = v; });
+        this.sl('p-torpers',  v => { cfg.TOR_PERS = v; });
+        this.sl('p-torglow',  v => { cfg.TOR_GLOW = v; });
+        this.sl('p-torinflow',v => { cfg.TOR_INFLOW = v; });
+        this.sl('p-torradvel',v => { cfg.TOR_RADVEL = v; });
+        this.sl('p-torradspr',v => { cfg.TOR_RADSPR = v; });
+        this.sl('p-torcont',  v => { cfg.TOR_CONT = v; });
+
         // Toggles
-        this.tog('tog-mix',    v => { cfg.MIX    = v; });
-        this.tog('tog-bg',     v => { cfg.BG     = v; });
-        this.tog('tog-jelly',  v => { cfg.JELLY  = v; });
-        this.tog('tog-lazy',   v => { cfg.LAZY   = v; });
-        this.tog('tog-bloom',  v => { this.mDisp.uniforms.uAdvBloom.value = v ? 1.0 : 0.0; });
-        this.tog('tog-border', v => {
+        this.tog('tog-mix',       v => { cfg.MIX    = v; });
+        this.tog('tog-bg',        v => { cfg.BG     = v; });
+        this.tog('tog-jelly',     v => { cfg.JELLY  = v; });
+        this.tog('tog-lazy',      v => { cfg.LAZY   = v; });
+        this.tog('tog-torenable', v => { cfg.TOR_ENABLE = v; });
+        this.tog('tog-torhoriz',  v => { cfg.TOR_HORIZ = v; });
+        this.tog('tog-bloom',     v => { this.mDisp.uniforms.uAdvBloom.value = v ? 1.0 : 0.0; });
+        this.tog('tog-border',    v => {
             cfg.BORDER = v;
             document.getElementById('border-fx').style.display = v ? 'block' : 'none';
         });
@@ -488,12 +521,24 @@ class FluidEngine {
         this.colorPicker = new ColorPicker();
         
         this.initPalette('main-palette', cfg.mainColors, true);
-        document.getElementById('add-main').onclick = () => this.addWell('main-palette', cfg.mainColors, true);
-        document.getElementById('rem-main').onclick = () => this.remWell('main-palette', cfg.mainColors);
+        document.getElementById('add-main').addEventListener('click', () => this.addWell('main-palette', cfg.mainColors, 'cw'));
+        document.getElementById('rem-main').addEventListener('click', () => this.remWell('main-palette', cfg.mainColors, 'cw'));
+        document.getElementById('add-box').addEventListener('click', () => this.addWell('box-palette', cfg.boxColors, 'bcw'));
+        document.getElementById('rem-box').addEventListener('click', () => this.remWell('box-palette', cfg.boxColors, 'bcw'));
+        
+        document.querySelectorAll('.tcw').forEach((el, i) => this.attachWell(el, i, cfg.torColors, false));
+        document.getElementById('add-tor').addEventListener('click', () => this.addWell('tor-palette', cfg.torColors, 'tcw'));
+        document.getElementById('rem-tor').addEventListener('click', () => this.remWell('tor-palette', cfg.torColors, 'tcw'));
 
-        this.initPalette('box-palette', cfg.boxColors, false);
-        document.getElementById('add-box').onclick  = () => this.addWell('box-palette', cfg.boxColors, false);
-        document.getElementById('rem-box').onclick  = () => this.remWell('box-palette', cfg.boxColors);
+        window.addEventListener('section-change', e => {
+            const idx = e.detail.index;
+            // Si llegamos al footer (index 5), forzamos una explosión roja
+            if (idx === 5) {
+                this.triggerSectionSplash(5);
+            } else {
+                this.triggerSectionSplash(idx);
+            }
+        });
     }
 
     sl(id, cb) {
@@ -546,20 +591,21 @@ class FluidEngine {
         }
     }
 
-    addWell(containerId, arr, isMain) {
+    addWell(containerId, arr, typeClass) {
         const wrap = document.getElementById(containerId);
         const hex  = '#' + Math.floor(Math.random() * 0xFFFFFF).toString(16).padStart(6, '0');
         const well = document.createElement('div');
-        well.className = isMain ? 'cw' : 'bcw';
+        well.className = typeClass === true ? 'cw' : (typeClass === false ? 'bcw' : typeClass);
         well.style.background = hex;
         wrap.appendChild(well);
         arr.push(hexToColor(hex));
-        this.attachWell(well, arr.length - 1, arr, isMain);
+        this.attachWell(well, arr.length - 1, arr, well.className === 'cw');
     }
 
-    remWell(containerId, arr) {
+    remWell(containerId, arr, typeClass) {
         const wrap  = document.getElementById(containerId);
-        const nodes = wrap.querySelectorAll('.cw, .bcw');
+        const qClass = typeClass ? '.' + typeClass : '.cw, .bcw, .tcw';
+        const nodes = wrap.querySelectorAll(qClass);
         if (nodes.length <= 1) return;
         nodes[nodes.length - 1].remove();
         arr.pop();
@@ -617,10 +663,54 @@ class FluidEngine {
         this.pass(this.mSplat, this.bVel.write);
         this.bVel.swap();
 
-        this.mSplat.uniforms.uTgt.value = this.bDens.read.texture;
-        this.mSplat.uniforms.uCol.value.set(col.r, col.g, col.b);
-        this.pass(this.mSplat, this.bDens.write);
-        this.bDens.swap();
+        if (col !== null) {
+            this.mSplat.uniforms.uTgt.value = this.bDens.read.texture;
+            this.mSplat.uniforms.uCol.value.set(col.r, col.g, col.b);
+            this.pass(this.mSplat, this.bDens.write);
+            this.bDens.swap();
+        }
+    }
+
+    triggerSectionSplash(idx) {
+        if (cfg.BG) {
+            for (let i = 0; i < 5; i++) {
+                const px = Math.random();
+                const py = Math.random();
+                const vx = (Math.random() - 0.5) * 20000;
+                const vy = (Math.random() - 0.5) * 20000;
+                this.splat(px, py, vx, vy, new THREE.Color(0), 0.02);
+            }
+            return;
+        }
+
+        if (!cfg.TOR_ENABLE) return; // Si el usuario apaga el efecto TOR, no generamos salpicadura.
+
+        const cIdx = idx % cfg.torColors.length;
+        const baseC = cfg.torColors[cIdx];
+        
+        // Multiplicador de intensidad usando el parámetro local TOR_GLOW
+        const col = { r: baseC.r * cfg.TOR_GLOW, g: baseC.g * cfg.TOR_GLOW, b: baseC.b * cfg.TOR_GLOW };
+
+        // 1. Efecto Expansivo Radial Suave (Smoke Speed y Smoke Spread locales)
+        // Pasamos null como color para que SOLO empuje el fluido viejo sin teñirlo ni oscurecerlo.
+        for (let i = 0; i < 6; i++) {
+            const angle = (i / 6) * Math.PI * 2;
+            const dx = Math.cos(angle) * cfg.TOR_RADVEL;
+            const dy = Math.sin(angle) * cfg.TOR_RADVEL;
+            this.splat(0.5, 0.5, dx, dy, null, cfg.TOR_RADSPR * cfg.TOR_INFLOW);
+        }
+
+        // 2. Doble Chorro Dipolo usando velocidad, persistencia, contención y turbulencia local
+        const turb = cfg.TOR_TURB;
+        if (cfg.TOR_HORIZ) {
+            // Chorro Horizontal (Izquierda y Derecha)
+            this.splat(0.5 + cfg.TOR_CONT, 0.5,  cfg.TOR_VEL, (Math.random()-0.5)*turb, col, cfg.TOR_PERS * cfg.TOR_INFLOW); // Derecha
+            this.splat(0.5 - cfg.TOR_CONT, 0.5, -cfg.TOR_VEL, (Math.random()-0.5)*turb, col, cfg.TOR_PERS * cfg.TOR_INFLOW); // Izquierda
+        } else {
+            // Chorro Vertical (Arriba y Abajo)
+            this.splat(0.5, 0.5 + cfg.TOR_CONT, (Math.random()-0.5)*turb,  cfg.TOR_VEL, col, cfg.TOR_PERS * cfg.TOR_INFLOW); // Arriba
+            this.splat(0.5, 0.5 - cfg.TOR_CONT, (Math.random()-0.5)*turb, -cfg.TOR_VEL, col, cfg.TOR_PERS * cfg.TOR_INFLOW); // Abajo
+        }
     }
 
     animate() {

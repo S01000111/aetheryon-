@@ -20,6 +20,9 @@ export function initScrolly() {
         });
 
         steps[índice].scrollIntoView({ behavior: 'smooth', block: 'start' });
+        
+        // Avisar al motor GPGPU que cambiamos de sección
+        window.dispatchEvent(new CustomEvent('section-change', { detail: { index: índice } }));
     }
 
     // ─── Throttle — reducido a 550 ms para mayor fluidez ─────────────────────
@@ -67,6 +70,32 @@ export function initScrolly() {
     window.scrollyIr = (índice) => {
         window.dispatchEvent(new CustomEvent('scrolly-goto', { detail: { index: índice } }));
     };
+
+    // ─── Dragging dot-nav ──────────────────────────────────────────────────
+    const dotNav = document.getElementById('dot-nav');
+    let isDragging = false;
+
+    const handleDrag = (e) => {
+        const rect = dotNav.getBoundingClientRect();
+        const y = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
+        const h = rect.height;
+        const percent = Math.max(0, Math.min(1, y / h));
+        const targetIdx = Math.round(percent * (steps.length - 1));
+        
+        if (targetIdx !== indiceSección && !estaDesplazando) {
+            estaDesplazando = true;
+            activarSección(targetIdx);
+            setTimeout(() => { estaDesplazando = false; }, 450);
+        }
+    };
+
+    dotNav.addEventListener('mousedown', (e) => { isDragging = true; handleDrag(e); });
+    window.addEventListener('mousemove', (e) => { if (isDragging) handleDrag(e); });
+    window.addEventListener('mouseup', () => { isDragging = false; });
+
+    dotNav.addEventListener('touchstart', (e) => { isDragging = true; handleDrag(e); }, { passive: false });
+    window.addEventListener('touchmove', (e) => { if (isDragging) { e.preventDefault(); handleDrag(e); } }, { passive: false });
+    window.addEventListener('touchend', () => { isDragging = false; });
 
     // ─── Arrancar en sección 0 ────────────────────────────────────────────────
     activarSección(0);

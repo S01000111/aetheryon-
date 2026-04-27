@@ -70,9 +70,39 @@
         .cw.sel { border-color:#fff; transform:scale(1.15); box-shadow:0 0 14px rgba(255,255,255,.25); }
         .pal-btns { display:flex; gap:8px; margin-top:10px; }
         .pal-btn { background:none; border:1px dashed rgba(255,255,255,.2); color:#fff; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:16px; line-height:26px; text-align:center; transition:.2s; pointer-events:auto; }
-        .pal-btn:hover { background:rgba(255,255,255,.08); }
+        .pal-btn:hover { background: rgba(157,78,221,0.3); }
 
-        /* BORDER CANVAS */
+        .collapsible-header {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+            padding: 8px 0;
+        }
+        .collapsible-header .ph-icon {
+            font-size: 10px;
+            transition: transform 0.3s ease;
+        }
+        .sec-content {
+            overflow: hidden;
+            transition: max-height 0.4s ease, opacity 0.4s ease;
+            max-height: 1200px;
+            opacity: 1;
+        }
+        .sec-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+        }
+        .tcw {
+            width: 20px; height: 20px; border-radius: 50%;
+            cursor: pointer; transition: 0.3s;
+            border: 2px solid transparent; flex-shrink: 0;
+        }
+        .tcw:hover { transform: scale(1.2); }
+        .tcw.active { border-color: #fff; box-shadow: 0 0 10px #fff; }
+
+        /* HUD: color puntos */
         #border-fx { position:fixed; inset:0; z-index:2; pointer-events:none; display:none; }
     </style>
 </head>
@@ -98,33 +128,32 @@
                 <div class="nav-item">
                     <a href="#">Clases <span class="nav-arrow">▾</span></a>
                     <div class="dropdown">
-                        <a href="#" onclick="abrirClase('guerrero');return false;"><span class="dd-icon">⚔️</span>Guerrero</a>
-                        <a href="#" onclick="abrirClase('mago');return false;"><span class="dd-icon">🔮</span>Mago</a>
-                        <a href="#" onclick="abrirClase('arquera');return false;"><span class="dd-icon">🏹</span>Arquera</a>
-                        <a href="#" onclick="abrirClase('picaro');return false;"><span class="dd-icon">🗡️</span>Pícaro</a>
+                        <a href="#" onclick="abrirOverlay('clase-guerrero');return false;"><span class="dd-icon">⚔️</span>Guerrero</a>
+                        <a href="#" onclick="abrirOverlay('clase-mago');return false;"><span class="dd-icon">🔮</span>Mago</a>
+                        <a href="#" onclick="abrirOverlay('clase-arquera');return false;"><span class="dd-icon">🏹</span>Arquera</a>
+                        <a href="#" onclick="abrirOverlay('clase-picaro');return false;"><span class="dd-icon">🗡️</span>Pícaro</a>
                     </div>
                 </div>
                 <div class="nav-item">
                     <a href="#">Lore <span class="nav-arrow">▾</span></a>
                     <div class="dropdown">
-                        <a href="#"><span class="dd-icon">📖</span>El Viaje del Héroe</a>
-                        <a href="#"><span class="dd-icon">🔱</span>Los Arcanos</a>
-                        <a href="#"><span class="dd-icon">⚡</span>Dioses &amp; Titanes</a>
-                        <a href="#"><span class="dd-icon">🌟</span>La Profecía</a>
+                        <a href="#" onclick="abrirOverlay('lore-viaje');return false;"><span class="dd-icon">📖</span>El Viaje del Héroe</a>
+                        <a href="#" onclick="abrirOverlay('lore-arcanos');return false;"><span class="dd-icon">🔱</span>Los Arcanos</a>
+                        <a href="#" onclick="abrirOverlay('lore-dioses');return false;"><span class="dd-icon">⚡</span>Dioses &amp; Titanes</a>
+                        <a href="#" onclick="abrirOverlay('lore-profecia');return false;"><span class="dd-icon">🌟</span>La Profecía</a>
                     </div>
                 </div>
                 <div class="nav-item">
                     <a href="#">Galería <span class="nav-arrow">▾</span></a>
                     <div class="dropdown">
-                        <a href="#"><span class="dd-icon">🎨</span>Ilustraciones</a>
-                        <a href="#"><span class="dd-icon">🎬</span>Cinemáticas</a>
-                        <a href="#"><span class="dd-icon">✏️</span>Arte Conceptual</a>
-                        <a href="#"><span class="dd-icon">📸</span>Capturas en Juego</a>
+                        <a href="#" onclick="abrirOverlay('gal-ilus');return false;"><span class="dd-icon">🎨</span>Ilustraciones</a>
+                        <a href="#" onclick="abrirOverlay('gal-cine');return false;"><span class="dd-icon">🎬</span>Cinemáticas</a>
+                        <a href="#" onclick="abrirOverlay('gal-arte');return false;"><span class="dd-icon">✏️</span>Arte Conceptual</a>
+                        <a href="#" onclick="abrirOverlay('gal-capturas');return false;"><span class="dd-icon">📸</span>Capturas en Juego</a>
                     </div>
                 </div>
             </div>
         </div>
-        <a href="#" class="btn-primary">Contáctanos</a>
     </nav>
 
     <!-- PUNTOS LATERALES -->
@@ -135,7 +164,8 @@
         <div class="dot"></div>
         <div class="dot"></div>
         <div class="dot"></div>
-        <div class="dot-triangle down" onclick="scrollyIr(4)"></div>
+        <div class="dot"></div>
+        <div class="dot-triangle down" onclick="scrollyIr(5)"></div>
     </div>
 
     <!-- SECCIONES DE SCROLL -->
@@ -191,28 +221,28 @@
             <div class="step-content clases-wrap">
                 <span class="status-text" style="text-align:center;display:block;">ELIGE TU DESTINO</span>
                 <div class="clases-grid">
-                    <div class="clase-card" style="--clase-color:#e63946" onclick="abrirClase('guerrero')">
+                    <div class="clase-card" style="--clase-color:#e63946" onclick="abrirOverlay('clase-guerrero')">
                         <span class="clase-icono">⚔️</span>
                         <span class="clase-signo-badge">♈ ARIES · ♌ LEO</span>
                         <span class="clase-card-nombre">Guerrero</span>
                         <span class="clase-card-desc">Fuerza sin límites. La primera prueba te forjó en acero y fuego.</span>
                         <span class="clase-card-cta">Ver clase →</span>
                     </div>
-                    <div class="clase-card" style="--clase-color:#4361ee" onclick="abrirClase('mago')">
+                    <div class="clase-card" style="--clase-color:#4361ee" onclick="abrirOverlay('clase-mago')">
                         <span class="clase-icono">🔮</span>
                         <span class="clase-signo-badge">♒ ACUARIO · ♏ ESCORPIO</span>
                         <span class="clase-card-nombre">Mago</span>
                         <span class="clase-card-desc">El conocimiento arcano dobla las leyes del cosmos a tu voluntad.</span>
                         <span class="clase-card-cta">Ver clase →</span>
                     </div>
-                    <div class="clase-card" style="--clase-color:#2dc653" onclick="abrirClase('arquera')">
+                    <div class="clase-card" style="--clase-color:#2dc653" onclick="abrirOverlay('clase-arquera')">
                         <span class="clase-icono">🏹</span>
                         <span class="clase-signo-badge">♐ SAGITARIO · ♍ VIRGO</span>
                         <span class="clase-card-nombre">Arquera</span>
                         <span class="clase-card-desc">Precisa como las estrellas. Ningún destino escapa a su mirada.</span>
                         <span class="clase-card-cta">Ver clase →</span>
                     </div>
-                    <div class="clase-card" style="--clase-color:#f4a261" onclick="abrirClase('picaro')">
+                    <div class="clase-card" style="--clase-color:#f4a261" onclick="abrirOverlay('clase-picaro')">
                         <span class="clase-icono">🗡️</span>
                         <span class="clase-signo-badge">♊ GÉMINIS · ♎ LIBRA</span>
                         <span class="clase-card-nombre">Pícaro</span>
@@ -233,6 +263,23 @@
                 </div>
             </div>
         </section>
+
+        <!-- FOOTER MINIMALISTA -->
+        <footer id="site-footer" class="step">
+            <div class="footer-inner">
+                <img src="/img/logo.svg" alt="Aetheryon" onerror="this.onerror=null;this.src='/img/logo.png'" class="footer-logo">
+                <p class="footer-slogan">FORJADO EN LAS ESTRELLAS</p>
+                <a href="#" class="btn-primary" style="margin: 20px 0;">Contactar al Oráculo</a>
+                <div class="footer-bottom">
+                    <p class="footer-copy">© MMXXVI MYTHOS STUDIOS. ALL RIGHTS RESERVED.</p>
+                    <div class="footer-links">
+                        <a href="#">Términos</a>
+                        <a href="#">Privacidad</a>
+                        <a href="#">Prensa</a>
+                    </div>
+                </div>
+            </div>
+        </footer>
 
     </div>
 
@@ -342,6 +389,71 @@
                 </div>
             </div>
 
+            <!-- TOROIDAL EFFECT (TOR) -->
+            <div class="sec">
+                <div class="sec-header-ui collapsible-header" onclick="this.nextElementSibling.classList.toggle('collapsed')">
+                    <span>&#x2B22; EFECTO TOROIDAL (TOR)</span>
+                    <span class="ph-icon">▲</span>
+                </div>
+                <div class="sec-content">
+                    <div class="tog-row">
+                        <span class="tog-lbl">Habilitar Splash TOR</span>
+                        <div id="tog-torenable" class="tog on"></div>
+                    </div>
+                    <div class="tog-row">
+                        <span class="tog-lbl">Explosión Horizontal</span>
+                        <div id="tog-torhoriz" class="tog on"></div>
+                    </div>
+                    
+                    <div class="ctrl" style="margin-top:10px;">
+                        <div class="ctrl-info">Turbulencia Local <span class="val" id="v-torturb">0</span></div>
+                        <input type="range" id="p-torturb" min="0" max="2000" step="50" value="0">
+                    </div>
+                    <div class="ctrl">
+                        <div class="ctrl-info">Velocidad (Chorro Dual) <span class="val" id="v-torvel">5000</span></div>
+                        <input type="range" id="p-torvel" min="1000" max="30000" step="500" value="5000">
+                    </div>
+                    <div class="ctrl">
+                        <div class="ctrl-info">Persistencia (Radio Dual) <span class="val" id="v-torpers">0.02</span></div>
+                        <input type="range" id="p-torpers" min="0.01" max="0.1" step="0.001" value="0.02">
+                    </div>
+                    <div class="ctrl">
+                        <div class="ctrl-info">Glow (Multiplicador Color) <span class="val" id="v-torglow">5</span></div>
+                        <input type="range" id="p-torglow" min="1" max="100" step="1" value="5">
+                    </div>
+                    <div class="ctrl">
+                        <div class="ctrl-info">Inflow Strength (Carga) <span class="val" id="v-torinflow">3.2</span></div>
+                        <input type="range" id="p-torinflow" min="0.1" max="5.0" step="0.1" value="3.2">
+                    </div>
+                    <div class="ctrl">
+                        <div class="ctrl-info">Smoke Speed (Despeje Radial) <span class="val" id="v-torradvel">0</span></div>
+                        <input type="range" id="p-torradvel" min="0" max="30000" step="500" value="0">
+                    </div>
+                    <div class="ctrl">
+                        <div class="ctrl-info">Smoke Spread (Radio Despeje) <span class="val" id="v-torradspr">0.06</span></div>
+                        <input type="range" id="p-torradspr" min="0.005" max="0.15" step="0.001" value="0.06">
+                    </div>
+                    <div class="ctrl">
+                        <div class="ctrl-info">Contención (Offset) <span class="val" id="v-torcont">0.01</span></div>
+                        <input type="range" id="p-torcont" min="0" max="0.1" step="0.005" value="0.01">
+                    </div>
+
+                    <span class="sec-label" style="margin-top:10px;">TOR Palette — Dbl-click to edit</span>
+                    <div class="pal-wrap" id="tor-palette">
+                        <div class="tcw" style="background:#6600ff"></div>
+                        <div class="tcw" style="background:#00b3ff"></div>
+                        <div class="tcw" style="background:#ff8800"></div>
+                        <div class="tcw" style="background:#37ff00"></div>
+                        <div class="tcw" style="background:#82614f"></div>
+                        <div class="tcw" style="background:#ff0000"></div>
+                    </div>
+                    <div class="pal-btns">
+                        <button class="pal-btn" id="add-tor">+</button>
+                        <button class="pal-btn" id="rem-tor">−</button>
+                    </div>
+                </div>
+            </div>
+
             <div class="sec">
                 <span class="sec-label">Border Glow Effect</span>
                 <div class="tog-row">
@@ -367,8 +479,8 @@
                 <div class="sec-header-ui">&#x2B22; INTERFAZ HUD</div>
                 <span class="sec-label">Color Puntos de Navegación</span>
                 <div class="dot-color-swatches">
-                    <div class="dcw active" style="background:#9d4edd" data-color="#9d4edd" data-ga="rgba(157,78,221,0.9)" data-gb="rgba(157,78,221,0.55)" data-gc="rgba(157,78,221,0.25)" title="Violeta"></div>
-                    <div class="dcw" style="background:#00f2ff" data-color="#00f2ff" data-ga="rgba(0,242,255,0.9)" data-gb="rgba(0,242,255,0.55)" data-gc="rgba(0,242,255,0.25)" title="Cyan"></div>
+                    <div class="dcw" style="background:#9d4edd" data-color="#9d4edd" data-ga="rgba(157,78,221,0.9)" data-gb="rgba(157,78,221,0.55)" data-gc="rgba(157,78,221,0.25)" title="Violeta"></div>
+                    <div class="dcw active" style="background:#00f2ff" data-color="#00f2ff" data-ga="rgba(0,242,255,0.9)" data-gb="rgba(0,242,255,0.55)" data-gc="rgba(0,242,255,0.25)" title="Cyan"></div>
                     <div class="dcw" style="background:#ff6b35" data-color="#ff6b35" data-ga="rgba(255,107,53,0.9)" data-gb="rgba(255,107,53,0.55)" data-gc="rgba(255,107,53,0.25)" title="Naranja"></div>
                     <div class="dcw" style="background:#ffd700" data-color="#ffd700" data-ga="rgba(255,215,0,0.9)" data-gb="rgba(255,215,0,0.55)" data-gc="rgba(255,215,0,0.25)" title="Dorado"></div>
                     <div class="dcw" style="background:#37ff00" data-color="#37ff00" data-ga="rgba(55,255,0,0.9)" data-gb="rgba(55,255,0,0.55)" data-gc="rgba(55,255,0,0.25)" title="Verde"></div>
@@ -391,10 +503,11 @@
         </div>
     </div>
 
-    <!-- OVERLAYS DE CLASES -->
-    <div class="clase-overlay" id="clase-guerrero">
-        <button class="clase-cerrar" onclick="cerrarClase()">&#8592; VOLVER</button>
-        <div class="clase-inner">
+    <!-- OVERLAYS GLOBALES (Clases, Lore, Galería) -->
+    <div class="ui-overlay" id="clase-guerrero">
+        <button class="btn-cerrar" onclick="cerrarOverlays()">&#8592; VOLVER</button>
+        <div class="overlay-nav-top"><button class="nav-arrow-overlay" onclick="navOverlay('clase', -1)">◄</button><span class="overlay-nav-title">CLASES / GUERRERO</span><button class="nav-arrow-overlay" onclick="navOverlay('clase', 1)">►</button></div>
+        <div class="overlay-inner">
             <div class="clase-header"><span class="clase-symbol">&#9800;</span><div><span class="clase-signo-text">ARIES &middot; LEO &middot; TAURO</span><h2 class="clase-nombre">GUERRERO</h2></div></div>
             <p class="clase-prueba">Primera Prueba: El León de Nemea</p>
             <p class="clase-lore">Forjado en el fuego de la primera batalla, el Guerrero encarna la fuerza bruta del zodíaco. Ningún monstruo puede detener su avance. Cada ciclo lo afila contra las estrellas.</p>
@@ -408,9 +521,10 @@
             <div class="clase-hab-list"><div class="clase-hab">Furia Olímpica</div><div class="clase-hab">Piel de Nemea</div><div class="clase-hab">Golpe Sísmico</div></div>
         </div>
     </div>
-    <div class="clase-overlay" id="clase-mago">
-        <button class="clase-cerrar" onclick="cerrarClase()">&#8592; VOLVER</button>
-        <div class="clase-inner">
+    <div class="ui-overlay" id="clase-mago">
+        <button class="btn-cerrar" onclick="cerrarOverlays()">&#8592; VOLVER</button>
+        <div class="overlay-nav-top"><button class="nav-arrow-overlay" onclick="navOverlay('clase', -1)">◄</button><span class="overlay-nav-title">CLASES / MAGO</span><button class="nav-arrow-overlay" onclick="navOverlay('clase', 1)">►</button></div>
+        <div class="overlay-inner">
             <div class="clase-header"><span class="clase-symbol">&#9810;</span><div><span class="clase-signo-text">ACUARIO &middot; ESCORPIO &middot; PISCIS</span><h2 class="clase-nombre">MAGO</h2></div></div>
             <p class="clase-prueba">Segunda Prueba: La Hidra de Lerna</p>
             <p class="clase-lore">Donde otros ven caos, el Mago ve patrones escritos en las estrellas. Su poder arcano nace de los secretos que los dioses ocultaron en las constelaciones.</p>
@@ -424,9 +538,10 @@
             <div class="clase-hab-list"><div class="clase-hab">Vínculo Estelar</div><div class="clase-hab">Tormenta Arcana</div><div class="clase-hab">Espejo de Destino</div></div>
         </div>
     </div>
-    <div class="clase-overlay" id="clase-arquera">
-        <button class="clase-cerrar" onclick="cerrarClase()">&#8592; VOLVER</button>
-        <div class="clase-inner">
+    <div class="ui-overlay" id="clase-arquera">
+        <button class="btn-cerrar" onclick="cerrarOverlays()">&#8592; VOLVER</button>
+        <div class="overlay-nav-top"><button class="nav-arrow-overlay" onclick="navOverlay('clase', -1)">◄</button><span class="overlay-nav-title">CLASES / ARQUERA</span><button class="nav-arrow-overlay" onclick="navOverlay('clase', 1)">►</button></div>
+        <div class="overlay-inner">
             <div class="clase-header"><span class="clase-symbol">&#9808;</span><div><span class="clase-signo-text">SAGITARIO &middot; VIRGO &middot; LIBRA</span><h2 class="clase-nombre">ARQUERA</h2></div></div>
             <p class="clase-prueba">Tercera Prueba: La Cierva de Cerinea</p>
             <p class="clase-lore">Nacida bajo la flecha de Sagitario, la Arquera nunca yerra. Su mirada atraviesa el velo entre mundos, cazando no solo cuerpos sino destinos.</p>
@@ -440,9 +555,10 @@
             <div class="clase-hab-list"><div class="clase-hab">Flecha del Oráculo</div><div class="clase-hab">Paso Celestial</div><div class="clase-hab">Lluvia de Estrellas</div></div>
         </div>
     </div>
-    <div class="clase-overlay" id="clase-picaro">
-        <button class="clase-cerrar" onclick="cerrarClase()">&#8592; VOLVER</button>
-        <div class="clase-inner">
+    <div class="ui-overlay" id="clase-picaro">
+        <button class="btn-cerrar" onclick="cerrarOverlays()">&#8592; VOLVER</button>
+        <div class="overlay-nav-top"><button class="nav-arrow-overlay" onclick="navOverlay('clase', -1)">◄</button><span class="overlay-nav-title">CLASES / PÍCARO</span><button class="nav-arrow-overlay" onclick="navOverlay('clase', 1)">►</button></div>
+        <div class="overlay-inner">
             <div class="clase-header"><span class="clase-symbol">&#9802;</span><div><span class="clase-signo-text">GÉMINIS &middot; LIBRA &middot; ESCORPIO</span><h2 class="clase-nombre">PÍCARO</h2></div></div>
             <p class="clase-prueba">Cuarta Prueba: El Jabalí de Erimanto</p>
             <p class="clase-lore">El Pícaro existe entre sombras y estrellas. Su dualidad geminiana le permite ser dos cosas a la vez: invisible e imparable, mortal e inmortal.</p>
@@ -457,25 +573,250 @@
         </div>
     </div>
 
+    <!-- LORE OVERLAYS -->
+    <div class="ui-overlay" id="lore-viaje">
+        <button class="btn-cerrar" onclick="cerrarOverlays()">&#8592; VOLVER</button>
+        <div class="overlay-nav-top"><button class="nav-arrow-overlay" onclick="navOverlay('lore', -1)">◄</button><span class="overlay-nav-title">LORE / VIAJE DEL HÉROE</span><button class="nav-arrow-overlay" onclick="navOverlay('lore', 1)">►</button></div>
+        <div class="overlay-inner">
+            <h2 class="lore-title">El Viaje del Héroe</h2>
+            <span class="lore-meta">Capítulo I · El Renacimiento</span>
+            <div class="lore-body">
+                <p>Las estrellas no nacen en el vacío, nacen del colapso. Cuando los antiguos dioses abandonaron el Olimpo, dejaron fragmentos de su esencia dispersos entre las constelaciones. Tu viaje comienza aquí, no como un mortal, sino como un recipiente de polvo estelar.</p>
+                <p>Cada caída en batalla no es el final, es una refracción. El ciclo exige que mueras para comprender la verdadera naturaleza del laberinto. Sólo enfrentando las Doce Pruebas podrás forjar la llave cósmica que abre las puertas de Aetheryon.</p>
+            </div>
+        </div>
+    </div>
+    <div class="ui-overlay" id="lore-arcanos">
+        <button class="btn-cerrar" onclick="cerrarOverlays()">&#8592; VOLVER</button>
+        <div class="overlay-nav-top"><button class="nav-arrow-overlay" onclick="navOverlay('lore', -1)">◄</button><span class="overlay-nav-title">LORE / LOS ARCANOS</span><button class="nav-arrow-overlay" onclick="navOverlay('lore', 1)">►</button></div>
+        <div class="overlay-inner lore-arcanos-layout">
+            <span class="clase-symbol" style="font-size: 80px; display: block; margin-bottom: 20px;">&#9734;</span>
+            <h2 class="lore-title" style="font-size: 40px;">Los Arcanos Estelares</h2>
+            <span class="lore-meta" style="border: none; padding: 0;">Reliquias del cosmos</span>
+            <blockquote>
+                "No busques el poder en la espada, búscalo en el vacío que separa las estrellas."
+            </blockquote>
+            <p style="font-family: 'Times New Roman', serif; font-size: 20px; color: rgba(230,220,255,0.85); line-height: 1.8;">
+                Los Arcanos son fragmentos petrificados del primer Big Bang. A través del juego, podrás recolectarlos y equiparlos en tu manto zodiacal. Existen Arcanos mayores, que alteran la realidad misma de la simulación, y Arcanos menores, que te otorgan pequeñas ventajas en la batalla contra las Sombras.
+            </p>
+        </div>
+    </div>
+    <div class="ui-overlay" id="lore-dioses">
+        <button class="btn-cerrar" onclick="cerrarOverlays()">&#8592; VOLVER</button>
+        <div class="overlay-nav-top"><button class="nav-arrow-overlay" onclick="navOverlay('lore', -1)">◄</button><span class="overlay-nav-title">LORE / DIOSES & TITANES</span><button class="nav-arrow-overlay" onclick="navOverlay('lore', 1)">►</button></div>
+        <div class="overlay-inner wide">
+            <div class="galeria-header">
+                <h2 class="galeria-title">El Panteón Olvidado</h2>
+                <span class="galeria-subtitle">Aquellos que susurran desde la oscuridad</span>
+            </div>
+            <div class="lore-dioses-grid">
+                <div class="lore-dios-card">
+                    <h3>Zeus, el Caído</h3>
+                    <p style="color: rgba(255,255,255,0.6); line-height: 1.6;">Atrapado en el núcleo de la tormenta perpetua. Su rayo ya no ilumina el Olimpo, sino que alimenta el motor de Aetheryon.</p>
+                </div>
+                <div class="lore-dios-card">
+                    <h3>Cronos, el Insaciable</h3>
+                    <p style="color: rgba(255,255,255,0.6); line-height: 1.6;">El tiempo es una prisión que él mismo construyó. Los ciclos roguelite son los latidos de su oscuro corazón estelar.</p>
+                </div>
+                <div class="lore-dios-card">
+                    <h3>Atenea, la Constructora</h3>
+                    <p style="color: rgba(255,255,255,0.6); line-height: 1.6;">La única que previó la caída. Sus templos ahora sirven como zonas seguras entre las doce pruebas.</p>
+                </div>
+                <div class="lore-dios-card">
+                    <h3>Hades, el Archivista</h3>
+                    <p style="color: rgba(255,255,255,0.6); line-height: 1.6;">Las almas no mueren, se archivan. Él custodia el códice de todas las partidas fallidas.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="ui-overlay" id="lore-profecia">
+        <button class="btn-cerrar" onclick="cerrarOverlays()">&#8592; VOLVER</button>
+        <div class="overlay-nav-top"><button class="nav-arrow-overlay" onclick="navOverlay('lore', -1)">◄</button><span class="overlay-nav-title">LORE / LA PROFECÍA</span><button class="nav-arrow-overlay" onclick="navOverlay('lore', 1)">►</button></div>
+        <div class="overlay-inner wide lore-profecia-hero">
+            <h2>El XIII Signo</h2>
+            <p>Doce casas encierran el laberinto, pero sólo el decimotercer signo, el Ophiuchus, puede quebrar el ciclo. No naciste bajo las estrellas, tú eres la estrella que las devorará.</p>
+        </div>
+    </div>
+
+    <!-- GALERÍA OVERLAYS -->
+    <div class="ui-overlay" id="gal-ilus">
+        <button class="btn-cerrar" onclick="cerrarOverlays()">&#8592; VOLVER</button>
+        <div class="overlay-nav-top"><button class="nav-arrow-overlay" onclick="navOverlay('galeria', -1)">◄</button><span class="overlay-nav-title">GALERÍA / ILUSTRACIONES</span><button class="nav-arrow-overlay" onclick="navOverlay('galeria', 1)">►</button></div>
+        <div class="overlay-inner wide">
+            <div class="galeria-header">
+                <h2 class="galeria-title">Ilustraciones</h2>
+                <span class="galeria-subtitle">Arte oficial y visiones de Aetheryon</span>
+            </div>
+            <div class="galeria-grid">
+                <div class="gal-item"><span class="gal-placeholder">&#128444;</span><div class="gal-caption">El Despertar de Nemea</div></div>
+                <div class="gal-item"><span class="gal-placeholder">&#128444;</span><div class="gal-caption">Ruinas de Lerna</div></div>
+                <div class="gal-item"><span class="gal-placeholder">&#128444;</span><div class="gal-caption">Armadura Zodiacal</div></div>
+                <div class="gal-item"><span class="gal-placeholder">&#128444;</span><div class="gal-caption">Portal de Aetheryon</div></div>
+                <div class="gal-item"><span class="gal-placeholder">&#128444;</span><div class="gal-caption">El Oráculo Ciego</div></div>
+                <div class="gal-item"><span class="gal-placeholder">&#128444;</span><div class="gal-caption">Ascensión</div></div>
+            </div>
+        </div>
+    </div>
+    <div class="ui-overlay" id="gal-cine">
+        <button class="btn-cerrar" onclick="cerrarOverlays()">&#8592; VOLVER</button>
+        <div class="overlay-nav-top"><button class="nav-arrow-overlay" onclick="navOverlay('galeria', -1)">◄</button><span class="overlay-nav-title">GALERÍA / CINEMÁTICAS</span><button class="nav-arrow-overlay" onclick="navOverlay('galeria', 1)">►</button></div>
+        <div class="overlay-inner wide">
+            <div class="gal-cine-layout">
+                <div class="gal-cine-hero">
+                    <span class="gal-cine-play">▶</span>
+                    <div class="gal-caption" style="opacity:1;">Tráiler de Anuncio Oficial</div>
+                </div>
+                <div class="gal-cine-row">
+                    <div class="gal-item"><span class="gal-placeholder">▶</span><div class="gal-caption">Teaser: La Caída</div></div>
+                    <div class="gal-item"><span class="gal-placeholder">▶</span><div class="gal-caption">Gameplay: Guerrero</div></div>
+                    <div class="gal-item"><span class="gal-placeholder">▶</span><div class="gal-caption">Gameplay: Mago</div></div>
+                    <div class="gal-item"><span class="gal-placeholder">▶</span><div class="gal-caption">Detrás de Escena</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="ui-overlay" id="gal-arte">
+        <button class="btn-cerrar" onclick="cerrarOverlays()">&#8592; VOLVER</button>
+        <div class="overlay-nav-top"><button class="nav-arrow-overlay" onclick="navOverlay('galeria', -1)">◄</button><span class="overlay-nav-title">GALERÍA / ARTE CONCEPTUAL</span><button class="nav-arrow-overlay" onclick="navOverlay('galeria', 1)">►</button></div>
+        <div class="overlay-inner wide">
+            <div class="gal-arte-waterfall">
+                <div class="gal-item" style="aspect-ratio: auto; height: 300px;"><span class="gal-placeholder">&#128396;</span></div>
+                <div class="gal-item" style="aspect-ratio: auto; height: 450px;"><span class="gal-placeholder">&#128396;</span></div>
+                <div class="gal-item" style="aspect-ratio: auto; height: 250px;"><span class="gal-placeholder">&#128396;</span></div>
+                <div class="gal-item" style="aspect-ratio: auto; height: 500px;"><span class="gal-placeholder">&#128396;</span></div>
+                <div class="gal-item" style="aspect-ratio: auto; height: 350px;"><span class="gal-placeholder">&#128396;</span></div>
+                <div class="gal-item" style="aspect-ratio: auto; height: 280px;"><span class="gal-placeholder">&#128396;</span></div>
+            </div>
+        </div>
+    </div>
+    <div class="ui-overlay" id="gal-capturas">
+        <button class="btn-cerrar" onclick="cerrarOverlays()">&#8592; VOLVER</button>
+        <div class="overlay-nav-top"><button class="nav-arrow-overlay" onclick="navOverlay('galeria', -1)">◄</button><span class="overlay-nav-title">GALERÍA / CAPTURAS EN JUEGO</span><button class="nav-arrow-overlay" onclick="navOverlay('galeria', 1)">►</button></div>
+        <div class="overlay-inner wide" style="padding-top: 100px;">
+            <div class="gal-capturas-slider">
+                <div class="gal-item"><span class="gal-placeholder">&#128247;</span><div class="gal-caption">Batalla contra el Minotauro</div></div>
+                <div class="gal-item"><span class="gal-placeholder">&#128247;</span><div class="gal-caption">Explorando las ruinas</div></div>
+                <div class="gal-item"><span class="gal-placeholder">&#128247;</span><div class="gal-caption">Menú de inventario</div></div>
+                <div class="gal-item"><span class="gal-placeholder">&#128247;</span><div class="gal-caption">Efecto de Habilidad Arcana</div></div>
+                <div class="gal-item"><span class="gal-placeholder">&#128247;</span><div class="gal-caption">Pantalla de Derrota</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GALLERY POPUP GLOBAL -->
+    <div class="gal-popup-overlay" id="gal-popup-overlay">
+        <div class="gal-popup-inner">
+            <div class="gal-popup-content" id="gal-popup-content"></div>
+            <div class="gal-popup-controls">
+                <button class="nav-arrow-overlay" onclick="navGalPopup(-1)">◄</button>
+                <button class="btn-cerrar-popup" onclick="cerrarGalPopup()">&#10005; CERRAR</button>
+                <button class="nav-arrow-overlay" onclick="navGalPopup(1)">►</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="/src/main.js"></script>
     <script type="module">
         import { initScrolly } from '/src/scrolly.js';
         initScrolly();
     </script>
     <script>
-        function abrirClase(id) {
-            document.querySelectorAll('.clase-overlay').forEach(el => el.classList.remove('activa'));
-            const el = document.getElementById('clase-' + id);
+        function abrirOverlay(id) {
+            document.querySelectorAll('.ui-overlay').forEach(el => el.classList.remove('activa'));
+            const el = document.getElementById(id);
             if (el) { el.classList.add('activa'); document.body.style.overflow = 'hidden'; }
         }
-        function cerrarClase() {
-            document.querySelectorAll('.clase-overlay').forEach(el => el.classList.remove('activa'));
+        function cerrarOverlays() {
+            document.querySelectorAll('.ui-overlay').forEach(el => el.classList.remove('activa'));
             document.body.style.overflow = '';
         }
+
+        const overlayGroups = {
+            'clase': ['clase-guerrero', 'clase-mago', 'clase-arquera', 'clase-picaro'],
+            'lore': ['lore-viaje', 'lore-arcanos', 'lore-dioses', 'lore-profecia'],
+            'galeria': ['gal-ilus', 'gal-cine', 'gal-arte', 'gal-capturas']
+        };
+
+        function navOverlay(groupName, dir) {
+            const group = overlayGroups[groupName];
+            if (!group) return;
+            let activeIdx = group.findIndex(id => document.getElementById(id).classList.contains('activa'));
+            if (activeIdx === -1) activeIdx = 0;
+            
+            const currentEl = document.getElementById(group[activeIdx]);
+            const nextIdx = (activeIdx + dir + group.length) % group.length;
+            const nextEl = document.getElementById(group[nextIdx]);
+            
+            if (nextEl && currentEl !== nextEl) {
+                // Eliminar transición temporalmente para evitar destellos al fondo
+                currentEl.style.transition = 'none';
+                nextEl.style.transition = 'none';
+                
+                currentEl.classList.remove('activa');
+                nextEl.classList.add('activa');
+                
+                // Reiniciar animación del contenido interno
+                const inner = nextEl.querySelector('.overlay-inner');
+                if (inner) {
+                    inner.style.animation = 'none';
+                    inner.offsetHeight; // Forzar reflow
+                    inner.style.animation = '';
+                }
+                
+                // Restaurar la transición CSS normal para cuando se cierre con el botón
+                setTimeout(() => {
+                    currentEl.style.transition = '';
+                    nextEl.style.transition = '';
+                }, 50);
+            }
+        }
+
         function scrollyIr(i) {
             window.dispatchEvent(new CustomEvent('scrolly-goto', { detail: { index: i } }));
         }
+
+        // Lógica del Pop-up de Galería
+        let currentGalItems = [];
+        let currentGalIndex = 0;
+
+        function cerrarGalPopup() {
+            document.getElementById('gal-popup-overlay').classList.remove('activa');
+        }
+
+        function navGalPopup(dir) {
+            if (currentGalItems.length === 0) return;
+            currentGalIndex = (currentGalIndex + dir + currentGalItems.length) % currentGalItems.length;
+            
+            const content = document.getElementById('gal-popup-content');
+            content.style.opacity = 0;
+            setTimeout(() => {
+                content.innerHTML = currentGalItems[currentGalIndex].innerHTML;
+                content.style.opacity = 1;
+            }, 300);
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
+            // Inicializar eventos para elementos de galería
+            document.querySelectorAll('.gal-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    // Evitar que el clic se propague si es un play button
+                    if (e.target.classList.contains('gal-cine-play')) return;
+                    
+                    const parentOverlay = this.closest('.ui-overlay');
+                    if(parentOverlay) {
+                        currentGalItems = Array.from(parentOverlay.querySelectorAll('.gal-item'));
+                        currentGalIndex = currentGalItems.indexOf(this);
+                        
+                        const popup = document.getElementById('gal-popup-overlay');
+                        const content = document.getElementById('gal-popup-content');
+                        
+                        content.innerHTML = this.innerHTML;
+                        content.style.opacity = 1;
+                        popup.classList.add('activa');
+                    }
+                });
+            });
+
             document.querySelectorAll('.dcw').forEach(sw => {
                 sw.addEventListener('click', () => {
                     document.querySelectorAll('.dcw').forEach(s => s.classList.remove('active'));
