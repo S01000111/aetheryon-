@@ -12,6 +12,7 @@ const cfg = {
     INFLOW: 0.6, BOX_DIR: 'left', BOX_SPEED: 7.0, BOX_SPREAD: 0.5,
     LAZY: false, LAZY_VAL: 0.10, VISC: 0.0, JELLY: false,
     B_THICK: 31, B_INT: 0.15, B_SPD: 0.4,
+    PARTICLES: true, PART_RES: 128, PART_SIZE: 2.0, PART_OP: 0.25, PART_SPEED: 0.35,
     ACTIVE_IDX: 0,
     mainColors: [
         new THREE.Color(0x6600ff),
@@ -200,6 +201,41 @@ void main(){
     gl_FragColor = mix(c, (l + r + t + b + c) * 0.2, uAmt);
 }`;
 
+const partSimFS = `
+precision highp float;
+uniform sampler2D uPos, uVel, uInit;
+uniform float uDt, uSpeed;
+varying vec2 vUv;
+void main(){
+    vec4 p = texture2D(uPos, vUv);
+    vec2 v = texture2D(uVel, p.xy).xy;
+    p.xy += v * uDt * uSpeed;
+    if(p.x < 0.0 || p.x > 1.0 || p.y < 0.0 || p.y > 1.0) p = texture2D(uInit, vUv);
+    gl_FragColor = p;
+}`;
+
+const partRenderVS = `
+precision highp float;
+attribute vec2 aUv;
+uniform sampler2D uPos;
+uniform float uSize;
+void main(){
+    vec4 p = texture2D(uPos, aUv);
+    gl_Position = vec4(p.xy * 2.0 - 1.0, 0.0, 1.0);
+    gl_PointSize = uSize;
+}`;
+
+const partRenderFS = `
+precision highp float;
+uniform vec3 uCol;
+uniform float uOp;
+void main(){
+    float d = length(gl_PointCoord - 0.5);
+    if(d > 0.5) discard;
+    float a = smoothstep(0.5, 0.1, d) * uOp;
+    gl_FragColor = vec4(uCol, a);
+}`;
+
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 function hexToColor(hex) {
     // Asegurar formato #RRGGBB sin alfa
@@ -355,6 +391,7 @@ class FluidEngine {
     constructor() {
         this.renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
+        // autoClear true por defecto para pases de simulación
         document.getElementById('app').appendChild(this.renderer.domElement);
 
         this.camera = new THREE.Camera();
@@ -366,6 +403,7 @@ class FluidEngine {
         this.buildMaterials();
         this.buildUI();
         this.buildBorderFX();
+        this.buildParticles();
 
         this.mouse       = new THREE.Vector2(-1, -1);
         this.targetMouse = new THREE.Vector2(-1, -1);
@@ -420,8 +458,8 @@ class FluidEngine {
         this.animate();
     }
 
-    dblBuf(w, h) {
-        const p = { type: THREE.FloatType, format: THREE.RGBAFormat, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter };
+    dblBuf(w, h, filter = THREE.LinearFilter) {
+        const p = { type: THREE.FloatType, format: THREE.RGBAFormat, minFilter: filter, magFilter: filter };
         return {
             read:  new THREE.WebGLRenderTarget(w, h, p),
             write: new THREE.WebGLRenderTarget(w, h, p),
@@ -443,6 +481,47 @@ class FluidEngine {
         [this.bDiv, this.bCurl].forEach(b => b.dispose());
         this.buildBuffers();
         this.buildMaterials();
+        this.buildParticles();
+    }
+
+    buildParticles() {
+        const res = cfg.PART_RES;
+        const data = new Float32Array(res * res * 4);
+        for(let i=0; i<res*res; i++) {
+            data[i*4]   = Math.random();
+            data[i*4+1] = Math.random();
+            data[i*4+2] = Math.random(); // Variación individual
+            data[i*4+3] = 1.0;
+        }
+        const tex = new THREE.DataTexture(data, res, res, THREE.RGBAFormat, THREE.FloatType);
+        tex.minFilter = tex.magFilter = THREE.NearestFilter;
+        tex.needsUpdate = true;
+
+        this.bPart = this.dblBuf(res, res, THREE.NearestFilter);
+        
+        // Material de simulación
+        this.mPartSim = new THREE.ShaderMaterial({
+            vertexShader: baseVS, fragmentShader: partSimFS,
+            uniforms: { uPos:{value:null}, uVel:{value:null}, uInit:{value:tex}, uDt:{value:0.016}, uSpeed:{value:cfg.SPEED} }
+        });
+
+        // Material de renderizado
+        const geo = new THREE.BufferGeometry();
+        const uvs = new Float32Array(res * res * 2);
+        for(let i=0; i<res*res; i++) {
+            uvs[i*2]   = (i % res) / res;
+            uvs[i*2+1] = Math.floor(i / res) / res;
+        }
+        geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(res*res*3), 3));
+        geo.setAttribute('aUv', new THREE.BufferAttribute(uvs, 2));
+        
+        this.mPartRender = new THREE.ShaderMaterial({
+            vertexShader: partRenderVS, fragmentShader: partRenderFS,
+            transparent: true, blending: THREE.AdditiveBlending, depthTest: false,
+            uniforms: { uPos:{value:null}, uCol:{value:new THREE.Color(0xffffff)}, uSize:{value:cfg.PART_SIZE}, uOp:{value:cfg.PART_OP} }
+        });
+        this.partPoints = new THREE.Points(geo, this.mPartRender);
+        this.partPoints.frustumCulled = false;
     }
 
     buildMaterials() {
@@ -570,6 +649,37 @@ class FluidEngine {
                 this.triggerSectionSplash(idx);
             }
         });
+
+        window.addEventListener('vfx-update', e => {
+            const { id, state } = e.detail;
+            if (id === 'tog-vfx-particles') {
+                cfg.PARTICLES = state;
+                // No ocultamos el subpanel aquí, ya que ahora es un acordeón manual
+            }
+        });
+
+        window.addEventListener('color-change', e => {
+            cfg.ACTIVE_IDX = e.detail.index;
+        });
+
+        // Acordeón Particles
+        const headPart = document.getElementById('head-particles');
+        const subPart  = document.getElementById('sub-particles');
+        if (headPart && subPart) {
+            headPart.addEventListener('click', e => {
+                // Si hizo clic en el toggle, no colapsar/expandir
+                if (e.target.classList.contains('tog')) return;
+                const isHidden = subPart.style.display === 'none';
+                subPart.style.display = isHidden ? 'block' : 'none';
+            });
+        }
+
+        // Sliders Partículas
+        this.sl('p-psize',    v => { cfg.PART_SIZE = v; this.mPartRender.uniforms.uSize.value = v; });
+        this.sl('p-pop',      v => { cfg.PART_OP = v;   this.mPartRender.uniforms.uOp.value = v; });
+        this.sl('p-pspeed',   v => { cfg.PART_SPEED = v; });
+        this.sl('p-pcurl',    v => { cfg.CURL = v; });
+        this.sl('p-pveldiss', v => { cfg.VEL_DISS = v; });
     }
 
     sl(id, cb) {
@@ -854,10 +964,30 @@ class FluidEngine {
         this.mGrad.uniforms.uVel.value = this.bVel.read.texture;
         this.pass(this.mGrad, this.bVel.write); this.bVel.swap();
 
+        // Simulación de Partículas
+        if (cfg.PARTICLES) {
+            this.mPartSim.uniforms.uPos.value = this.bPart.read.texture;
+            this.mPartSim.uniforms.uVel.value = this.bVel.read.texture;
+            this.mPartSim.uniforms.uSpeed.value = cfg.SPEED * cfg.PART_SPEED;
+            this.mPartSim.uniforms.uDt.value = 0.016;
+            this.pass(this.mPartSim, this.bPart.write);
+            this.bPart.swap();
+        }
+
         // DISPLAY
         this.mDisp.uniforms.uTex.value = this.bDens.read.texture;
         this.mDisp.uniforms.uTime.value = performance.now() / 1000.0;
         this.pass(this.mDisp, null);
+
+        // Renderizado de Partículas (encima del fluido)
+        if (cfg.PARTICLES) {
+            const activeCol = cfg.mainColors[cfg.ACTIVE_IDX] || new THREE.Color(0xffffff);
+            this.mPartRender.uniforms.uPos.value = this.bPart.read.texture;
+            this.mPartRender.uniforms.uCol.value.copy(activeCol).lerp(new THREE.Color(0xffffff), 0.3);
+            this.renderer.autoClear = false; // No borrar el fluido
+            this.renderer.render(this.partPoints, this.camera);
+            this.renderer.autoClear = true;  // Restaurar para el siguiente frame
+        }
 
         // BORDER
         if (cfg.BORDER) this.drawBorder(this.t);
