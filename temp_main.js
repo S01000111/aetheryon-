@@ -1,6 +1,6 @@
-import * as THREE from 'three';
+﻿import * as THREE from 'three';
 
-// ── CONFIG ────────────────────────────────────────────────────────────────────
+// ÔöÇÔöÇ CONFIG ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 const cfg = {
     SIM_RES: 128, DYE_RES: 512,
     DISS: 0.99, VEL_DISS: 0.98,
@@ -47,7 +47,7 @@ const cfg = {
     ]
 };
 
-// ── SHADERS ───────────────────────────────────────────────────────────────────
+// ÔöÇÔöÇ SHADERS ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 const baseVS = `
 varying vec2 vUv;
 void main(){ vUv = uv; gl_Position = vec4(position, 1.0); }
@@ -164,7 +164,7 @@ float hash(vec2 p) {
 void main(){
     vec3 c = texture2D(uTex, vUv).rgb * uGlow;
     
-    // Evitar branches dinámicos (if) con texture2D para prevenir crashes de WebGL
+    // Evitar branches din├ímicos (if) con texture2D para prevenir crashes de WebGL
     vec2 d = vec2(0.003, 0.0);
     float r = texture2D(uTex, vUv - d).r;
     float b = texture2D(uTex, vUv + d).b;
@@ -200,14 +200,14 @@ void main(){
     gl_FragColor = mix(c, (l + r + t + b + c) * 0.2, uAmt);
 }`;
 
-// ── HELPERS ───────────────────────────────────────────────────────────────────
+// ÔöÇÔöÇ HELPERS ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 function hexToColor(hex) {
     // Asegurar formato #RRGGBB sin alfa
     const clean = hex.slice(0, 7);
     return new THREE.Color(clean);
 }
 
-// ── COLOR PICKER CUSTOM ────────────────────────────────────────────────────────
+// ÔöÇÔöÇ COLOR PICKER CUSTOM ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 class ColorPicker {
     constructor() {
         this.modal = document.getElementById('cp-modal');
@@ -350,7 +350,7 @@ class ColorPicker {
     }
 }
 
-// ── MOTOR ─────────────────────────────────────────────────────────────────────
+// ÔöÇÔöÇ MOTOR ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 class FluidEngine {
     constructor() {
         this.renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
@@ -373,7 +373,9 @@ class FluidEngine {
         this.queue       = [];
         this.t           = 0;
 
-        // Eliminamos el listener duplicado de aquí, se gestiona en buildUI()
+        window.addEventListener('section-change', (e) => {
+            this.triggerSectionSplash(e.detail.index);
+        });
 
         window.addEventListener('mousemove', e => {
             const x = e.clientX / window.innerWidth;
@@ -382,15 +384,6 @@ class FluidEngine {
             if (this.mouse.x < 0) {
                 this.mouse.set(x, y);
                 this.prevMouse.set(x, y);
-            }
-        });
-
-        window.addEventListener('resize', () => {
-            this.renderer.setSize(window.innerWidth, window.innerHeight);
-            if (this.mSplat) this.mSplat.uniforms.uAsp.value = window.innerWidth / window.innerHeight;
-            if (this.bfx) {
-                this.bfx.width = window.innerWidth;
-                this.bfx.height = window.innerHeight;
             }
         });
 
@@ -455,7 +448,7 @@ class FluidEngine {
         });
     }
 
-    // ── UI ────────────────────────────────────────────────────────────────────
+    // ÔöÇÔöÇ UI ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
     buildUI() {
         // Fidelity
         document.querySelectorAll('.fid-btn[data-sim]').forEach(btn => {
@@ -528,7 +521,6 @@ class FluidEngine {
         this.colorPicker = new ColorPicker();
         
         this.initPalette('main-palette', cfg.mainColors, true);
-        this.initPalette('box-palette', cfg.boxColors, false);
         document.getElementById('add-main').addEventListener('click', () => this.addWell('main-palette', cfg.mainColors, 'cw'));
         document.getElementById('rem-main').addEventListener('click', () => this.remWell('main-palette', cfg.mainColors, 'cw'));
         document.getElementById('add-box').addEventListener('click', () => this.addWell('box-palette', cfg.boxColors, 'bcw'));
@@ -540,7 +532,7 @@ class FluidEngine {
 
         window.addEventListener('section-change', e => {
             const idx = e.detail.index;
-            // Si llegamos al footer (index 5), forzamos una explosión roja
+            // Si llegamos al footer (index 5), forzamos una explosi├│n roja
             if (idx === 5) {
                 this.triggerSectionSplash(5);
             } else {
@@ -581,14 +573,14 @@ class FluidEngine {
     }
 
     attachWell(well, i, arr, isMain) {
-        // Doble click → abre el color picker CUSTOM
+        // Doble click ÔåÆ abre el color picker CUSTOM
         well.addEventListener('dblclick', e => {
             e.preventDefault();
             e.stopPropagation();
             this.colorPicker.open(well, arr, i);
         });
 
-        // Click simple → solo para paleta principal: seleccionar color
+        // Click simple ÔåÆ solo para paleta principal: seleccionar color
         if (isMain) {
             well.addEventListener('click', e => {
                 if (e.detail >= 2) return; // ignorar el click del dblclick
@@ -619,13 +611,13 @@ class FluidEngine {
         arr.pop();
     }
 
-    // ── Border FX ─────────────────────────────────────────────────────────────
+    // ÔöÇÔöÇ Border FX ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
     buildBorderFX() {
         this.bfx  = document.getElementById('border-fx');
         this.bctx = this.bfx.getContext('2d');
         this.bfx.width  = window.innerWidth;
         this.bfx.height = window.innerHeight;
-        // Mostrar el canvas de borde si está activo por defecto
+        // Mostrar el canvas de borde si est├í activo por defecto
         if (cfg.BORDER) this.bfx.style.display = 'block';
     }
 
@@ -654,7 +646,7 @@ class FluidEngine {
         draw(W-th, 0,    th, H,      W, 0,    W-th, 0,    '#7000ff'); // right
     }
 
-    // ── Render ────────────────────────────────────────────────────────────────
+    // ÔöÇÔöÇ Render ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
     pass(mat, target) {
         this.quad.material = mat;
         this.renderer.setRenderTarget(target);
@@ -691,37 +683,33 @@ class FluidEngine {
             return;
         }
 
-        if (!cfg.TOR_ENABLE) return;
-        
-        // Sincronizar aspect ratio para asegurar centrado horizontal perfecto (0.5) en móviles
-        if (this.mSplat) this.mSplat.uniforms.uAsp.value = window.innerWidth / window.innerHeight;
+        if (!cfg.TOR_ENABLE) return; // Si el usuario apaga el efecto TOR, no generamos salpicadura.
 
         const cIdx = idx % cfg.torColors.length;
         const baseC = cfg.torColors[cIdx];
         
-        // Centro de explosión ajustado a 0.52 para compensar el peso visual de los textos principales
-        const cx = 0.5;
-        const cy = 0.52; 
-        
-        // Multiplicador de intensidad usando el parámetro local TOR_GLOW
+        // Multiplicador de intensidad usando el par├ímetro local TOR_GLOW
         const col = { r: baseC.r * cfg.TOR_GLOW, g: baseC.g * cfg.TOR_GLOW, b: baseC.b * cfg.TOR_GLOW };
 
         // 1. Efecto Expansivo Radial Suave (Smoke Speed y Smoke Spread locales)
+        // Pasamos null como color para que SOLO empuje el fluido viejo sin te├▒irlo ni oscurecerlo.
         for (let i = 0; i < 6; i++) {
             const angle = (i / 6) * Math.PI * 2;
             const dx = Math.cos(angle) * cfg.TOR_RADVEL;
             const dy = Math.sin(angle) * cfg.TOR_RADVEL;
-            this.splat(cx, cy, dx, dy, null, cfg.TOR_RADSPR * cfg.TOR_INFLOW);
+            this.splat(0.5, 0.5, dx, dy, null, cfg.TOR_RADSPR * cfg.TOR_INFLOW);
         }
 
-        // 2. Doble Chorro Dipolo
+        // 2. Doble Chorro Dipolo usando velocidad, persistencia, contenci├│n y turbulencia local
         const turb = cfg.TOR_TURB;
         if (cfg.TOR_HORIZ) {
-            this.splat(cx + cfg.TOR_CONT, cy,  cfg.TOR_VEL, (Math.random()-0.5)*turb, col, cfg.TOR_PERS * cfg.TOR_INFLOW);
-            this.splat(cx - cfg.TOR_CONT, cy, -cfg.TOR_VEL, (Math.random()-0.5)*turb, col, cfg.TOR_PERS * cfg.TOR_INFLOW);
+            // Chorro Horizontal (Izquierda y Derecha)
+            this.splat(0.5 + cfg.TOR_CONT, 0.5,  cfg.TOR_VEL, (Math.random()-0.5)*turb, col, cfg.TOR_PERS * cfg.TOR_INFLOW); // Derecha
+            this.splat(0.5 - cfg.TOR_CONT, 0.5, -cfg.TOR_VEL, (Math.random()-0.5)*turb, col, cfg.TOR_PERS * cfg.TOR_INFLOW); // Izquierda
         } else {
-            this.splat(cx, cy + cfg.TOR_CONT, (Math.random()-0.5)*turb,  cfg.TOR_VEL, col, cfg.TOR_PERS * cfg.TOR_INFLOW);
-            this.splat(cx, cy - cfg.TOR_CONT, (Math.random()-0.5)*turb, -cfg.TOR_VEL, col, cfg.TOR_PERS * cfg.TOR_INFLOW);
+            // Chorro Vertical (Arriba y Abajo)
+            this.splat(0.5, 0.5 + cfg.TOR_CONT, (Math.random()-0.5)*turb,  cfg.TOR_VEL, col, cfg.TOR_PERS * cfg.TOR_INFLOW); // Arriba
+            this.splat(0.5, 0.5 - cfg.TOR_CONT, (Math.random()-0.5)*turb, -cfg.TOR_VEL, col, cfg.TOR_PERS * cfg.TOR_INFLOW); // Abajo
         }
     }
 
@@ -777,7 +765,7 @@ class FluidEngine {
             }
         }
 
-        // ADVECCIÓN
+        // ADVECCI├ôN
         this.mAdv.uniforms.uVel.value  = this.bVel.read.texture;
         this.mAdv.uniforms.uSrc.value  = this.bVel.read.texture;
         this.mAdv.uniforms.uDiss.value = cfg.VEL_DISS;
@@ -801,7 +789,7 @@ class FluidEngine {
         this.mVort.uniforms.uCurl.value = this.bCurl.texture;
         this.pass(this.mVort, this.bVel.write); this.bVel.swap();
 
-        // SPLATS RATÓN
+        // SPLATS RAT├ôN
         this.queue.forEach(s => {
             let col;
             if (cfg.BG) {
@@ -815,11 +803,11 @@ class FluidEngine {
         });
         this.queue = [];
 
-        // PROYECCIÓN DE PRESIÓN
+        // PROYECCI├ôN DE PRESI├ôN
         this.mDiv.uniforms.uVel.value = this.bVel.read.texture;
         this.pass(this.mDiv, this.bDiv);
 
-        // JELLY PHYSICS: Reduce iteraciones de presión drásticamente si está apagado
+        // JELLY PHYSICS: Reduce iteraciones de presi├│n dr├ísticamente si est├í apagado
         const pIter = cfg.JELLY ? cfg.PRESSURE_ITER : 4;
         for (let i = 0; i < pIter; i++) {
             this.mPrs.uniforms.uPrs.value = this.bPrs.read.texture;

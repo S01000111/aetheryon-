@@ -2,13 +2,17 @@ export function initScrolly() {
     const steps = Array.from(document.querySelectorAll('.step'));
     const dots  = Array.from(document.querySelectorAll('.dot'));
 
-    let indiceSección   = 0;
+    let indiceSección   = -1; // Forzar activación de la primera sección (0) al arranque
     let estaDesplazando = false;
     let iniciadorTáctil = 0;
 
     // ─── Marcar sección activa ────────────────────────────────────────────────
-    function activarSección(índice) {
+    function activarSección(índice, desdeScrollNativo = false) {
         if (índice < 0 || índice >= steps.length) return;
+        
+        // Evitar duplicidad si ya estamos en esta sección
+        if (índice === indiceSección && !desdeScrollNativo) return;
+
         indiceSección = índice;
 
         dots.forEach(d => d.classList.remove('active'));
@@ -19,11 +23,17 @@ export function initScrolly() {
             else              step.classList.remove('is-visible');
         });
 
-        steps[índice].scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Solo hacemos scrollIntoView si NO viene de un scroll manual/nativo ya realizado
+        if (!desdeScrollNativo) {
+            steps[índice].scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
         
-        // Avisar al motor GPGPU que cambiamos de sección
+        // Avisar al motor GPGPU que cambiamos de sección (Solo si el índice cambió realmente)
         window.dispatchEvent(new CustomEvent('section-change', { detail: { index: índice } }));
     }
+
+    // Exponer función de salto
+    window.scrollyIr = activarSección;
 
     // ─── Throttle — reducido a 550 ms para mayor fluidez ─────────────────────
     function irASiguiente(dirección) {

@@ -17,19 +17,33 @@
         #content p.brand { color:var(--ac); letter-spacing:10px; font-size:13px; margin:0 0 4px; font-weight:300; }
         #content h2 { font-size:88px; letter-spacing:-4px; margin:0; font-weight:700; line-height:.85; }
 
-        /* PANEL */
-        #panel {
-            position:fixed; top:20px; right:20px; width:var(--w);
+        #panel, #panel-vfx {
+            position:fixed; right:20px; width:var(--w);
             background:var(--bg); backdrop-filter:blur(60px); -webkit-backdrop-filter:blur(60px);
             border:1px solid rgba(255,255,255,.07); border-radius:22px;
             z-index:100; box-shadow:0 40px 90px rgba(0,0,0,.95);
             overflow:visible;
             max-height:92vh;
-            transition:max-height .5s cubic-bezier(.16,1,.3,1), width .45s cubic-bezier(.16,1,.3,1), border-radius .45s;
+            transition:max-height .5s cubic-bezier(.16,1,.3,1), width .45s cubic-bezier(.16,1,.3,1), border-radius .45s, top 0.5s ease, bottom 0.5s ease;
         }
-        #panel.collapsed { width:50px; max-height:50px; overflow:hidden; border-radius:50%; box-shadow:0 0 25px rgba(0,242,255,0.3), inset 0 0 10px rgba(0,242,255,0.2); animation:pulseGlow 2s infinite alternate; }
+        #panel { top:20px; z-index:105; }
+        #panel-vfx { top:85px; border-color: rgba(157,78,221,0.15); z-index:100; }
+        
+        #panel.collapsed, #panel-vfx.collapsed { width:50px; max-height:50px; overflow:hidden; border-radius:50%; }
+        #panel.collapsed { box-shadow:0 0 25px rgba(0,242,255,0.3), inset 0 0 10px rgba(0,242,255,0.2); animation:pulseGlow 2s infinite alternate; }
+        #panel-vfx.collapsed { box-shadow:0 0 25px rgba(157,78,221,0.3), inset 0 0 10px rgba(157,78,221,0.2); animation:pulseGlowVfx 2s infinite alternate; }
+        
         @keyframes pulseGlow { 0% { box-shadow:0 0 15px rgba(0,242,255,0.2), inset 0 0 5px rgba(0,242,255,0.1); } 100% { box-shadow:0 0 35px rgba(0,242,255,0.5), inset 0 0 20px rgba(0,242,255,0.3); } }
+        @keyframes pulseGlowVfx { 0% { box-shadow:0 0 15px rgba(157,78,221,0.2), inset 0 0 5px rgba(157,78,221,0.1); } 100% { box-shadow:0 0 35px rgba(157,78,221,0.5), inset 0 0 20px rgba(157,78,221,0.3); } }
+
         .ph { padding:16px 22px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; border-bottom:1px solid rgba(255,255,255,.04); border-radius:22px 22px 0 0; }
+        
+        #panel.collapsed .ph, #panel-vfx.collapsed .ph { height:50px; padding:0; border:none; justify-content:center; }
+        #panel.collapsed .ph h3, #panel.collapsed .ph-icon, #panel-vfx.collapsed .ph h3, #panel-vfx.collapsed .ph-icon { display:none; }
+        
+        #panel.collapsed::after, #panel-vfx.collapsed::after { content:''; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:10px; height:10px; border-radius:50%; opacity:0.8; pointer-events:none; }
+        #panel.collapsed::after { background:var(--ac); }
+        #panel-vfx.collapsed::after { background:#9d4edd; }
         .ph h3 { margin:0; font-size:10px; letter-spacing:4px; text-transform:uppercase; color:var(--ac); }
         .ph-icon { font-size:14px; opacity:.3; transition:.4s; }
         #panel.collapsed .ph { height:50px; padding:0; border:none; justify-content:center; }
@@ -171,7 +185,7 @@
     <!-- SECCIONES DE SCROLL -->
     <div id="scroll-container">
 
-        <section class="step" id="step-1">
+        <section class="step is-visible" id="step-1">
             <div class="step-content hero-content">
                 <p class="hero-kicker">MYTHOS · MMXXVI</p>
                 <h1 class="hero-title">AETHERYON</h1>
@@ -288,7 +302,7 @@
 
 
     <div id="panel" class="collapsed">
-        <div class="ph" onclick="document.getElementById('panel').classList.toggle('collapsed')">
+        <div class="ph" onclick="document.getElementById('panel').classList.toggle('collapsed'); typeof actualizarCascada === 'function' && actualizarCascada();">
             <h3>Aetheryon <span style="font-weight:300;opacity:.35;">Elite</span></h3>
             <span class="ph-icon">▲</span>
         </div>
@@ -488,6 +502,35 @@
                 </div>
             </div>
 
+        </div>
+    </div>
+
+    <!-- PANEL VFX (VIOLETA) -->
+    <div id="panel-vfx" class="collapsed">
+        <div class="ph" onclick="document.getElementById('panel-vfx').classList.toggle('collapsed'); typeof actualizarCascada === 'function' && actualizarCascada();">
+            <h3 style="margin:0; font-size:10px; letter-spacing:4px; text-transform:uppercase; color:#9d4edd;">Aetheryon <span style="font-weight:300;opacity:.35;">VFX</span></h3>
+            <span class="ph-icon" style="color:#9d4edd;">▲</span>
+        </div>
+        <div class="pb">
+            <div class="sec">
+                <span class="sec-label" style="font-size:8.5px; opacity:.3; text-transform:uppercase; letter-spacing:2.5px; margin-bottom:12px; display:block;">PROXIMAS EVOLUCIONES (BETA)</span>
+                <div class="tog-row">
+                    <span class="tog-lbl">Obstáculos (SDF)</span>
+                    <div id="tog-vfx-sdf" class="tog vfx"></div>
+                </div>
+                <div class="tog-row">
+                    <span class="tog-lbl">Aether-Glow</span>
+                    <div id="tog-vfx-glow" class="tog vfx"></div>
+                </div>
+                <div class="tog-row">
+                    <span class="tog-lbl">Audio-Reactividad</span>
+                    <div id="tog-vfx-audio" class="tog vfx"></div>
+                </div>
+                <div class="tog-row">
+                    <span class="tog-lbl">Particles (GPGPU)</span>
+                    <div id="tog-vfx-particles" class="tog vfx"></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -829,6 +872,88 @@
                 });
             });
         });
+    </script>
+    <style>
+        .ctrl-panel.collapsed { width:50px !important; max-height:50px !important; overflow:hidden !important; border-radius:50% !important; }
+        .ctrl-panel.collapsed .ph h3, .ctrl-panel.collapsed .ph-icon { display:none !important; }
+        
+        #panel-vfx.collapsed { box-shadow:0 0 25px rgba(157,78,221,0.3), inset 0 0 10px rgba(157,78,221,0.2); animation:pulseGlowVfx 2s infinite alternate; }
+        @keyframes pulseGlowVfx { 0% { box-shadow:0 0 15px rgba(157,78,221,0.2), inset 0 0 5px rgba(157,78,221,0.1); } 100% { box-shadow:0 0 35px rgba(157,78,221,0.5), inset 0 0 20px rgba(157,78,221,0.3); } }
+        #panel-vfx.collapsed::after { content:''; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:10px; height:10px; border-radius:50%; background:#9d4edd; opacity:0.8; }
+        .tog.on.vfx { background:#9d4edd; box-shadow: 0 0 10px #9d4edd; }
+        @media (max-width: 768px) {
+            #panel { top: auto !important; bottom: 20px !important; right: 80px !important; width: 50px !important; z-index: 110 !important; left: auto !important; }
+            #panel:not(.collapsed) { width: calc(100% - 100px) !important; right: 10px !important; }
+            
+            #panel-vfx { top: auto !important; bottom: 20px !important; right: 20px !important; width: 50px !important; z-index: 109 !important; left: auto !important; }
+            #panel-vfx:not(.collapsed) { width: calc(100% - 100px) !important; bottom: 85px !important; right: 10px !important; }
+
+            .btn-cerrar { bottom: 20px !important; top: auto !important; left: 50% !important; transform: translateX(-50%) !important; width: auto !important; text-align: center; white-space: nowrap; padding: 12px 30px !important; box-shadow: 0 10px 30px rgba(0,0,0,0.8) !important; }
+        }
+    </style>
+    <script>
+        function actualizarCascada() {
+            const p = document.getElementById('panel');
+            const vfx = document.getElementById('panel-vfx');
+            if (p && vfx) {
+                const isCollapsed = p.classList.contains('collapsed');
+                // En responsive no aplicamos cascada vertical de escritorio
+                if (window.innerWidth > 768) {
+                    vfx.style.top = isCollapsed ? '85px' : (p.offsetHeight + 40) + 'px';
+                    vfx.style.bottom = 'auto';
+                } else {
+                    vfx.style.top = 'auto';
+                    vfx.style.bottom = '20px';
+                }
+            }
+        }
+        
+        window.addEventListener('resize', actualizarCascada);
+        window.addEventListener('load', actualizarCascada);
+        document.addEventListener('DOMContentLoaded', actualizarCascada);
+        
+        // Listeners para Toggles VFX
+        document.addEventListener('DOMContentLoaded', () => {
+            const vfxTogs = ['tog-vfx-sdf', 'tog-vfx-glow', 'tog-vfx-audio', 'tog-vfx-particles'];
+            vfxTogs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.onclick = () => {
+                        el.classList.toggle('on');
+                        console.log(`VFX Toggle ${id}:`, el.classList.contains('on'));
+                        // Aquí se conectarían con el motor GPGPU
+                        window.dispatchEvent(new CustomEvent('vfx-update', { detail: { id, state: el.classList.contains('on') } }));
+                    };
+                }
+            });
+        });
+
+        // Sincronización de scroll nativo restaurada y optimizada
+        let scrollTimeout;
+        window.addEventListener('scroll', () => {
+            if (scrollTimeout) clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                const idx = Math.round(window.scrollY / window.innerHeight);
+                // Solo disparamos si scrolly.js está cargado y el índice realmente cambió
+                if (window.scrollyIr) {
+                    window.scrollyIr(idx, true); // Pasar flag para indicar que viene de scroll nativo
+                }
+            }, 100);
+        }, { passive: true });
+        // Inyectar altura para scrollbar
+        document.body.style.height = '600vh';
+        document.body.style.overflowY = 'auto';
+
+        // Asegurar visibilidad inicial inmediata
+        const arranque = () => {
+            if (window.scrollyIr) {
+                window.scrollyIr(0, true);
+                actualizarCascada();
+            }
+        };
+        window.addEventListener('load', arranque);
+        setTimeout(arranque, 50);
+        setTimeout(arranque, 500); // Doble chequeo por si el motor tarda
     </script>
 </body>
 </html>
