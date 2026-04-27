@@ -846,7 +846,7 @@ html, body {
 }
 .gal-popup-content {
     width: 100%;
-    aspect-ratio: 16/9;
+    max-height: 80vh;
     background: #000;
     border: 1px solid rgba(157,78,221,0.3);
     border-radius: 12px;
@@ -854,10 +854,14 @@ html, body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    font-size: 50px;
-    color: #fff;
+    overflow: hidden;
     box-shadow: 0 0 50px rgba(157,78,221,0.1);
     transition: opacity 0.3s ease;
+}
+.gal-popup-content img, .gal-popup-content video {
+    max-width: 100%;
+    max-height: 70vh;
+    object-fit: contain;
 }
 .gal-popup-content .gal-caption {
     font-size: 24px; /* Aumentar tamaño para el popup */

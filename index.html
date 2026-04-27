@@ -737,7 +737,7 @@
                 <h2 class="galeria-title">Ilustraciones</h2>
                 <span class="galeria-subtitle">Arte oficial y visiones de Aetheryon</span>
             </div>
-            <div class="galeria-grid">
+            <div class="galeria-grid" id="gal-grid-ilus">
                 <div class="gal-item"><span class="gal-placeholder">&#128444;</span><div class="gal-caption">El Despertar de Nemea</div></div>
                 <div class="gal-item"><span class="gal-placeholder">&#128444;</span><div class="gal-caption">Ruinas de Lerna</div></div>
                 <div class="gal-item"><span class="gal-placeholder">&#128444;</span><div class="gal-caption">Armadura Zodiacal</div></div>
@@ -756,7 +756,7 @@
                     <span class="gal-cine-play">▶</span>
                     <div class="gal-caption" style="opacity:1;">Tráiler de Anuncio Oficial</div>
                 </div>
-                <div class="gal-cine-row">
+                <div class="gal-cine-row" id="gal-grid-cine">
                     <div class="gal-item"><span class="gal-placeholder">▶</span><div class="gal-caption">Teaser: La Caída</div></div>
                     <div class="gal-item"><span class="gal-placeholder">▶</span><div class="gal-caption">Gameplay: Guerrero</div></div>
                     <div class="gal-item"><span class="gal-placeholder">▶</span><div class="gal-caption">Gameplay: Mago</div></div>
@@ -769,7 +769,7 @@
     <div class="ui-overlay" id="gal-arte">
         <div class="overlay-nav-top"><button class="nav-arrow-overlay" onclick="navOverlay('galeria', -1)">◄</button><span class="overlay-nav-title">GALERÍA / ARTE CONCEPTUAL</span><button class="nav-arrow-overlay" onclick="navOverlay('galeria', 1)">►</button></div>
         <div class="overlay-inner wide">
-            <div class="gal-arte-waterfall">
+            <div class="gal-arte-waterfall" id="gal-grid-arte">
                 <div class="gal-item" style="aspect-ratio: auto; height: 300px;"><span class="gal-placeholder">&#128396;</span></div>
                 <div class="gal-item" style="aspect-ratio: auto; height: 450px;"><span class="gal-placeholder">&#128396;</span></div>
                 <div class="gal-item" style="aspect-ratio: auto; height: 250px;"><span class="gal-placeholder">&#128396;</span></div>
@@ -784,7 +784,7 @@
 
         <div class="overlay-nav-top"><button class="nav-arrow-overlay" onclick="navOverlay('galeria', -1)">◄</button><span class="overlay-nav-title">GALERÍA / CAPTURAS EN JUEGO</span><button class="nav-arrow-overlay" onclick="navOverlay('galeria', 1)">►</button></div>
         <div class="overlay-inner wide" style="padding-top: 100px;">
-            <div class="gal-capturas-slider">
+            <div class="gal-capturas-slider" id="gal-grid-captura">
                 <div class="gal-item"><span class="gal-placeholder">&#128247;</span><div class="gal-caption">Batalla contra el Minotauro</div></div>
                 <div class="gal-item"><span class="gal-placeholder">&#128247;</span><div class="gal-caption">Explorando las ruinas</div></div>
                 <div class="gal-item"><span class="gal-placeholder">&#128247;</span><div class="gal-caption">Menú de inventario</div></div>
@@ -810,7 +810,24 @@
     <script type="module" src="/src/main.js"></script>
     <script type="module">
         import { initScrolly } from '/src/scrolly.js';
+        import { inicializarGaleria } from '/src/galeria.js';
         initScrolly();
+        inicializarGaleria();
+
+        // Helper para vincular el popup con las imágenes dinámicas
+        window.setGaleriaContexto = (item) => {
+            const parentOverlay = item.closest('.ui-overlay');
+            // Filtrar para obtener solo items que NO son placeholders
+            window.currentGalItems = Array.from(parentOverlay.querySelectorAll('.gal-item')).filter(el => !el.querySelector('.gal-placeholder'));
+            window.currentGalIndex = window.currentGalItems.indexOf(item);
+            
+            const popup = document.getElementById('gal-popup-overlay');
+            const content = document.getElementById('gal-popup-content');
+            
+            content.innerHTML = item.innerHTML;
+            content.style.opacity = 1;
+            popup.classList.add('activa');
+        };
     </script>
     <script>
         window.bloqueoScroll = false;
@@ -888,8 +905,8 @@
         }
 
         // Lógica del Pop-up de Galería
-        let currentGalItems = [];
-        let currentGalIndex = 0;
+        window.currentGalItems = [];
+        window.currentGalIndex = 0;
 
         function cerrarGalPopup() {
             document.getElementById('gal-popup-overlay').classList.remove('activa');

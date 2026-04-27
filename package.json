@@ -12,6 +12,7 @@
   "author": "Antigravity",
   "license": "ISC",
   "dependencies": {
+    "@supabase/supabase-js": "^2.104.1",
     "dat.gui": "^0.7.9",
     "three": "^0.150.0",
     "vanilla-picker": "^2.12.3",
