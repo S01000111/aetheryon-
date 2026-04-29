@@ -32,9 +32,9 @@
         #panel { top:20px; right:80px; z-index:100; }
         #panel-vfx { top:20px; right:20px; border-color: rgba(157,78,221,0.15); z-index:110; }
         
-        #panel.collapsed, #panel-vfx.collapsed { width:50px; max-height:50px; overflow:hidden; border-radius:50%; }
-        #panel.collapsed { box-shadow:0 0 25px rgba(0,242,255,0.3), inset 0 0 10px rgba(0,242,255,0.2); animation:pulseGlow 2s infinite alternate; }
-        #panel-vfx.collapsed { box-shadow:0 0 25px rgba(157,78,221,0.3), inset 0 0 10px rgba(157,78,221,0.2); animation:pulseGlowVfx 2s infinite alternate; }
+        #panel.collapsed, #panel-vfx.collapsed { width:25px; max-height:25px; overflow:hidden; border-radius:50%; }
+        #panel.collapsed { box-shadow:0 0 15px rgba(0,242,255,0.3); animation:pulseGlow 2s infinite alternate; }
+        #panel-vfx.collapsed { box-shadow:0 0 15px rgba(157,78,221,0.3); animation:pulseGlowVfx 2s infinite alternate; }
         
         @keyframes pulseGlow { 0% { box-shadow:0 0 15px rgba(0,242,255,0.2), inset 0 0 5px rgba(0,242,255,0.1); } 100% { box-shadow:0 0 35px rgba(0,242,255,0.5), inset 0 0 20px rgba(0,242,255,0.3); } }
         @keyframes pulseGlowVfx { 0% { box-shadow:0 0 15px rgba(157,78,221,0.2), inset 0 0 5px rgba(157,78,221,0.1); } 100% { box-shadow:0 0 35px rgba(157,78,221,0.5), inset 0 0 20px rgba(157,78,221,0.3); } }
@@ -42,7 +42,7 @@
 
         .ph { padding:16px 22px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; border-bottom:1px solid rgba(255,255,255,.04); border-radius:22px 22px 0 0; }
         
-        #panel.collapsed .ph, #panel-vfx.collapsed .ph { height:50px; padding:0; border:none; justify-content:center; }
+        #panel.collapsed .ph, #panel-vfx.collapsed .ph { height:25px; padding:0; border:none; justify-content:center; }
         #panel.collapsed .ph h3, #panel.collapsed .ph-icon, #panel-vfx.collapsed .ph h3, #panel-vfx.collapsed .ph-icon { display:none; }
         #panel.collapsed::after, #panel-vfx.collapsed::after { content:''; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:10px; height:10px; border-radius:50%; opacity:0.8; pointer-events:none; }
         #panel.collapsed::after { background:var(--ac); }
@@ -114,7 +114,21 @@
         .tcw:hover { transform: scale(1.2); }
         .tcw.active { border-color: #fff; box-shadow: 0 0 10px #fff; }
 
-        /* HUD: color puntos */
+        /* HUD: color puntos */        #panel.collapsed, #panel-vfx.collapsed { width:25px !important; max-height:25px !important; overflow:hidden !important; border-radius:50% !important; }
+        #panel.collapsed .ph h3, #panel.collapsed .ph-icon, #panel-vfx.collapsed .ph h3, #panel-vfx.collapsed .ph-icon { display:none !important; }
+        
+        #panel-vfx.collapsed { box-shadow:0 0 15px rgba(157,78,221,0.3); animation:pulseGlowVfx 2s infinite alternate; }
+        .tog.on.vfx { background:#9d4edd; box-shadow: 0 0 10px #9d4edd; }
+        @media (max-width: 768px) {
+            #panel { top: 20px !important; right: 80px !important; width: 25px !important; z-index: 110 !important; left: auto !important; bottom: auto !important; }
+            #panel:not(.collapsed) { width: calc(100% - 40px) !important; right: 20px !important; top: 20px !important; }
+            
+            #panel-vfx { top: 20px !important; right: 20px !important; width: 25px !important; z-index: 109 !important; left: auto !important; bottom: auto !important; }
+            #panel-vfx:not(.collapsed) { width: calc(100% - 40px) !important; top: 85px !important; right: 20px !important; }
+
+            .btn-cerrar-final { margin: 40px auto 20px !important; position: relative !important; left: auto !important; transform: none !important; width: fit-content !important; display: block !important; }
+        }
+        
         @media (max-width: 768px) {
             .ui-overlay { padding: 40px 20px !important; box-sizing: border-box !important; }
             .ui-overlay .overlay-inner { width: calc(100% - 40px) !important; margin: 0 auto !important; height: auto !important; max-height: 80vh !important; border-radius: 25px !important; }
@@ -817,7 +831,6 @@
         // Helper para vincular el popup con las imágenes dinámicas
         window.setGaleriaContexto = (item) => {
             const parentOverlay = item.closest('.ui-overlay');
-            // Filtrar para obtener solo items que NO son placeholders
             window.currentGalItems = Array.from(parentOverlay.querySelectorAll('.gal-item')).filter(el => !el.querySelector('.gal-placeholder'));
             window.currentGalIndex = window.currentGalItems.indexOf(item);
             
@@ -825,6 +838,19 @@
             const content = document.getElementById('gal-popup-content');
             
             content.innerHTML = item.innerHTML;
+            
+            // Limpiar iconos de play residuales para el popup
+            const residualPlay = content.querySelector('.gal-cine-play');
+            if (residualPlay) residualPlay.remove();
+            
+            // Si es video, añadir controles y quitar el mute para el popup
+            const video = content.querySelector('video');
+            if (video) {
+                video.controls = true;
+                video.muted = false;
+                video.play().catch(e => console.warn("Autoplay bloqueado por el navegador:", e));
+            }
+
             content.style.opacity = 1;
             popup.classList.add('activa');
         };
@@ -909,7 +935,23 @@
         window.currentGalIndex = 0;
 
         function cerrarGalPopup() {
-            document.getElementById('gal-popup-overlay').classList.remove('activa');
+            const popup = document.getElementById('gal-popup-overlay');
+            const content = document.getElementById('gal-popup-content');
+            
+            // Detener cualquier video que se esté reproduciendo
+            const videos = content.querySelectorAll('video');
+            videos.forEach(v => {
+                v.pause();
+                v.src = ""; // Liberar recursos y detener audio
+                v.load();
+            });
+
+            popup.classList.remove('activa');
+            
+            // Limpiar contenido después de la transición de salida
+            setTimeout(() => {
+                content.innerHTML = "";
+            }, 300);
         }
 
         function navGalPopup(dir) {
@@ -920,31 +962,26 @@
             content.style.opacity = 0;
             setTimeout(() => {
                 content.innerHTML = currentGalItems[currentGalIndex].innerHTML;
+                
+                // Limpiar iconos de play residuales al navegar
+                const residualPlay = content.querySelector('.gal-cine-play');
+                if (residualPlay) residualPlay.remove();
+
+                // Aplicar lógica de video al navegar
+                const video = content.querySelector('video');
+                if (video) {
+                    video.controls = true;
+                    video.muted = false;
+                    video.play().catch(e => console.warn("Error al reproducir video en navegación:", e));
+                }
+
                 content.style.opacity = 1;
             }, 300);
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Inicializar eventos para elementos de galería
-            document.querySelectorAll('.gal-item').forEach(item => {
-                item.addEventListener('click', function(e) {
-                    // Evitar que el clic se propague si es un play button
-                    if (e.target.classList.contains('gal-cine-play')) return;
-                    
-                    const parentOverlay = this.closest('.ui-overlay');
-                    if(parentOverlay) {
-                        currentGalItems = Array.from(parentOverlay.querySelectorAll('.gal-item'));
-                        currentGalIndex = currentGalItems.indexOf(this);
-                        
-                        const popup = document.getElementById('gal-popup-overlay');
-                        const content = document.getElementById('gal-popup-content');
-                        
-                        content.innerHTML = this.innerHTML;
-                        content.style.opacity = 1;
-                        popup.classList.add('activa');
-                    }
-                });
-            });
+            // La lógica de clics para la galería se maneja dinámicamente en galeria.js
+            // mediante la llamada a window.setGaleriaContexto(newSlot).
 
             document.querySelectorAll('.dcw').forEach(sw => {
                 sw.addEventListener('click', () => {
@@ -960,19 +997,50 @@
         });
     </script>
     <style>
-        #panel.collapsed, #panel-vfx.collapsed { width:50px !important; max-height:50px !important; overflow:hidden !important; border-radius:50% !important; }
-        #panel.collapsed .ph h3, #panel.collapsed .ph-icon, #panel-vfx.collapsed .ph h3, #panel-vfx.collapsed .ph-icon { display:none !important; }
-        
-        #panel-vfx.collapsed { box-shadow:0 0 25px rgba(157,78,221,0.3), inset 0 0 10px rgba(157,78,221,0.2); animation:pulseGlowVfx 2s infinite alternate; }
-        .tog.on.vfx { background:#9d4edd; box-shadow: 0 0 10px #9d4edd; }
-        @media (max-width: 768px) {
-            #panel { top: auto !important; bottom: 20px !important; right: 80px !important; width: 50px !important; z-index: 110 !important; left: auto !important; }
-            #panel:not(.collapsed) { width: calc(100% - 100px) !important; right: 10px !important; }
-            
-            #panel-vfx { top: auto !important; bottom: 20px !important; right: 20px !important; width: 50px !important; z-index: 109 !important; left: auto !important; }
-            #panel-vfx:not(.collapsed) { width: calc(100% - 100px) !important; bottom: 85px !important; right: 10px !important; }
+        .gal-popup-content .gal-caption {
+            position: relative !important;
+            bottom: auto !important;
+            left: auto !important;
+            width: 100% !important;
+            padding: 20px 0 25px 0 !important; /* Más aire abajo */
+            background: transparent !important;
+            text-align: center !important;
+            font-size: 15px !important;
+            letter-spacing: 4px !important;
+            text-transform: uppercase !important;
+            opacity: 0.9 !important;
+            border: none !important;
+            color: #fff !important;
+            display: block !important;
+        }
+        .gal-popup-content video, .gal-popup-content img {
+            border-radius: 12px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            max-height: 70vh;
+            object-fit: contain !important;
+        }
 
-            .btn-cerrar-final { margin: 40px auto 20px !important; position: relative !important; left: auto !important; transform: none !important; width: fit-content !important; display: block !important; }
+        /* Centrado de icono Play en el Hero de Cinemáticas */
+        .gal-cine-hero {
+            position: relative;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .gal-cine-hero .gal-cine-play {
+            position: absolute !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            z-index: 10;
+            margin: 0 !important;
+            font-size: 80px !important; /* Más grande para el hero */
+            color: #fff;
+            text-shadow: 0 0 30px rgba(0,0,0,0.9);
+            pointer-events: none;
+            opacity: 0.8;
         }
     </style>
     <script>
@@ -988,13 +1056,12 @@
                     p.style.right = '80px'; 
                     vfx.style.bottom = 'auto';
                 } else {
-                    // Responsive: Círculos en la base
-                    vfx.style.top = 'auto';
-                    vfx.style.bottom = '20px';
+                    // Responsive: Mantener arriba ajustados
+                    vfx.style.top = '20px';
                     vfx.style.right = '20px';
-                    p.style.top = 'auto';
-                    p.style.bottom = '20px';
-                    p.style.right = '80px';
+                    vfx.style.bottom = 'auto';
+                    p.style.top = '20px';
+                    p.style.right = '55px'; // Distancia proporcional a 25px
                 }
             }
         }

@@ -16,9 +16,28 @@ export async function inicializarGaleria() {
 
         if (error) throw error;
 
+        // Inyectar video principal (Hero)
+        const videosCine = imagenes.filter(img => img.categoria === 'cine');
+        const videoPrincipal = videosCine.find(v => v.nombre_imagen === 'Tráiler de Anuncio Oficial') || videosCine[0];
+        
+        if (videoPrincipal) {
+            const heroCont = document.querySelector('.gal-cine-hero');
+            if (heroCont) {
+                heroCont.innerHTML = `
+                    <span class="gal-cine-play">▶</span>
+                    <video src="${videoPrincipal.url_fija}" poster="${videoPrincipal.url_fija}" style="width:100%; height:100%; object-fit:cover; border-radius:12px;"></video>
+                    <div class="gal-caption" style="opacity:1;">${videoPrincipal.nombre_imagen}</div>
+                `;
+                // El Hero no usa hover-to-play, se abre en popup como los demás
+                heroCont.onclick = () => {
+                    if (window.setGaleriaContexto) window.setGaleriaContexto(heroCont);
+                };
+            }
+        }
+
         // Distribuir imágenes por contenedor manteniendo placeholders
         renderizarConPlaceholders(imagenes.filter(img => img.categoria === 'ilus'), 'gal-grid-ilus', '&#128444;');
-        renderizarConPlaceholders(imagenes.filter(img => img.categoria === 'cine'), 'gal-grid-cine', '▶', true);
+        renderizarConPlaceholders(videosCine, 'gal-grid-cine', '▶', true);
         renderizarConPlaceholders(imagenes.filter(img => img.categoria === 'arte'), 'gal-grid-arte', '&#128396;');
         renderizarConPlaceholders(imagenes.filter(img => img.categoria === 'captura'), 'gal-grid-captura', '&#128247;');
 
@@ -58,15 +77,29 @@ function renderizarConPlaceholders(items, containerId, iconoPlaceholder, esVideo
                 newSlot.style.aspectRatio = 'auto';
             }
             
+            const esVideoUrl = item.url_fija && (item.url_fija.endsWith('.mp4') || item.url_fija.endsWith('.webm') || item.url_fija.endsWith('.ogg'));
+            const usarVideo = esVideo || esVideoUrl;
+
             newSlot.innerHTML = `
-                ${esVideo ? '<span class="gal-cine-play">▶</span>' : ''}
-                <img src="${item.url_fija}" alt="${item.nombre_imagen}" style="width:100%; height:100%; object-fit:cover; display:block;">
+                ${usarVideo 
+                    ? `<video src="${item.url_fija}" muted loop playsinline style="width:100%; height:100%; object-fit:cover; display:block;"></video>`
+                    : `<img src="${item.url_fija}" alt="${item.nombre_imagen}" style="width:100%; height:100%; object-fit:cover; display:block;">`
+                }
                 <div class="gal-caption">${item.nombre_imagen}</div>
             `;
 
+            // Reproducción al hover para videos (estilo YouTube)
+            if (usarVideo) {
+                const videoEl = newSlot.querySelector('video');
+                newSlot.onmouseenter = () => videoEl.play().catch(e => {});
+                newSlot.onmouseleave = () => {
+                    videoEl.pause();
+                    videoEl.currentTime = 0; // Opcional: reiniciar el preview
+                };
+            }
+
             // Vincular evento de apertura
             newSlot.onclick = (e) => {
-                if (e.target.classList.contains('gal-cine-play')) return;
                 if (window.setGaleriaContexto) window.setGaleriaContexto(newSlot);
             };
         } else {

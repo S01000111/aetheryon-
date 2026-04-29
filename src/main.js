@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
 // ── CONFIG ────────────────────────────────────────────────────────────────────
 const cfg = {
     SIM_RES: 128, DYE_RES: 512,
@@ -12,7 +14,10 @@ const cfg = {
     INFLOW: 0.6, BOX_DIR: 'left', BOX_SPEED: 7.0, BOX_SPREAD: 0.5,
     LAZY: false, LAZY_VAL: 0.10, VISC: 0.0, JELLY: false,
     B_THICK: 31, B_INT: 0.15, B_SPD: 0.4,
-    PARTICLES: true, PART_RES: 128, PART_SIZE: 2.0, PART_OP: 0.25, PART_SPEED: 0.35,
+    PARTICLES: true, PART_RES: 128, 
+    PART_SIZE: isMobile ? 5.0 : 2.0, 
+    PART_OP: isMobile ? 0.1 : 0.25, 
+    PART_SPEED: 0.35,
     ACTIVE_IDX: 0,
     mainColors: [
         new THREE.Color(0x6600ff),
